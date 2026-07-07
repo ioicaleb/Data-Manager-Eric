@@ -149,6 +149,12 @@ def main():
         print("Logged in successfully.")
         print(driver.current_url)
     finally:
+        # TODO: Set to automatically grab code from email
+        # TODO: Access round results
+        # TODO: Organize results
+        # TODO: Log results to a file
+        # TODO: Apply results directly to Google Sheets (?)
+        # TODO: Make headless once finished debugging
         driver.quit()
 
 
