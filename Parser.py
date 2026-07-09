@@ -96,13 +96,14 @@ def parse_voters(voters_card):
         voters.append(voter)
     return voters
 
-def parse_submission(div, song_card, voters_card):
+def parse_submission(player_card, song_card, voters_card, votes):
+    player_info = player_card.find('h6')
     song = Song(
-        player_name = div.select("[id*='spotify']:nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(1) > :last-child > h6").get_text(),
+        player_name = convert_username_to_name(player_info.get_text().strip()),
         name = song_card.child().get_text(),
-        artist = song_card.select(":nth-child(2)").get_text(),
-        album = song_card.select(":nth-child(3)").get_text(),
-        votes = int(div.select(":nth-child(1) > :nth-child(1) > :nth-child(3) > :nth-child(1)").get_text()),
+        artist = song_card.select("div:nth-child(2)").get_text(),
+        album = song_card.select("div:nth-child(3)").get_text(),
+        votes = votes,
     )
     song.voters = parse_voters(voters_card)
     return song

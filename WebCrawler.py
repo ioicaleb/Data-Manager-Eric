@@ -22,7 +22,7 @@ def fill_email(driver, locator, value, timeout=10):
     elem = WebDriverWait(driver, timeout).until(EC.visibility_of_element_located(locator))
     elem.send_keys(value)
 
-def fill_code(driver, locator, value, timeout=10):
+def fill_code(driver, locator, value, timeout=60):
     elems = WebDriverWait(driver, timeout).until(EC.visibility_of_all_elements_located(locator))
     for elem, digit in zip(elems, value):
         elem.send_keys(digit)
@@ -126,7 +126,6 @@ def login(driver, config):
     global code
     # Fill code
     for locator in [
-        (By.CSS_SELECTOR, "div[data-testid='phonelogin-code'] > input"),
         (By.CSS_SELECTOR, "input[inputmode='numeric']"),
     ]:
         try:
@@ -135,9 +134,7 @@ def login(driver, config):
             fill_code(driver, locator, code)
             break
         except TimeoutException:
-            print("Can't submit code")
             continue
-    
     
     code = ""
 
@@ -167,22 +164,20 @@ def login(driver, config):
 
 def get_round_results(driver):
     rounds = []
-    #Get all completed rounds and open them in new tabs to get the results
     time.sleep(5)
     round_list = driver.current_window_handle
     soup = BeautifulSoup(driver.page_source, "html.parser")
     status_pattern = re.compile(r"status:\s*'COMPLETE'")
 
+    #Get all completed rounds
     elems = soup.find_all(
         lambda tag: tag.name == 'div' and 
         tag.has_attr('x-data') and 
         status_pattern.search(tag['x-data']))
-    #elems = soup.select("[x-data = status: 'COMPLETE']")
-    #elems = WebDriverWait(driver, 45).until(EC.visibility_of_all_elements_located((By.XPATH, "//*[@x-data and contains(translate(@x-data, ' ', ''), \"status:'COMPLETE'\")]")))
     links = []
     for elem in elems:
         anchors = [anchor.get('href') for anchor in elem.find_all("a", href = True)]
-        links.append(anchors[1])
+        links.append(f"https://app.musicleague.com{anchors[2]}")
     for link in links:
         # Open each completed round in a new tab to get the results and switch back to round list
         driver.switch_to.new_window('tab')
@@ -190,8 +185,8 @@ def get_round_results(driver):
         time.sleep(2)
         try:
             soup = BeautifulSoup(driver.page_source, "html.parser")
-            round_card = soup.find_all(class_= "card")[1]
-            round_number = round_card.find("span").get_text()
+            round_card = soup.find_all(class_= "card")[5]
+            round_number = int(round_card.find("span").get_text().split()[1])
             title = round_card.find("h5").get_text()
             description = round_card.find("p").get_text()
         except Exception as e:
@@ -202,9 +197,11 @@ def get_round_results(driver):
         results = []
         for div in divs:
             try:
-                song_card = div.find(":nth-child(1) > :nth-child(1) > :nth-child(2)")
+                song_card = div.select_one("div:nth-child(1) > div:nth-child(1) > div:nth-child(2)")
                 voters_card = div.select("[id*='votes']")
-                results.append(parse_submission(div, song_card, voters_card))
+                player_card = div.select_one("div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:last-child")
+                votes = int(div.select_one("div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > h3").get_text().strip())
+                results.append(parse_submission(player_card, song_card, voters_card, votes))
             except Exception as e:
                     print(e)
                     print("Can't get result information")

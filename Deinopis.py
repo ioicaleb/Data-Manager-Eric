@@ -3,9 +3,9 @@ import os
 import json
 
 # TODO: Organize results
-# TODO: Apply results directly to Google Sheets (?)
+# TODO: Apply results directly to Google Sheets
 # TODO: Make headless once finished debugging
-
+# TODO: Speed up getting code from email
 
 def load_config(path):
     with open(path, "r", encoding="utf-8") as f:

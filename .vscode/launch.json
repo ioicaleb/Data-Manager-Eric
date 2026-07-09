@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Deinopis",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/Deinopis.py",  // Update path if needed
+            "console": "integratedTerminal",
+            "args": [],  // Add arguments if needed
+            "cwd": "${workspaceFolder}",  // Set working directory
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}:${env{PYTHONPATH}}"
+            }
+        }
+    ]
+}
