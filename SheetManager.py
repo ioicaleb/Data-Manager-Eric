@@ -18,19 +18,19 @@ def verify_credentials():
   # The file token.json stores the user's access and refresh tokens, and is
   # created automatically when the authorization flow completes for the first
   # time.
-  if os.path.exists("token.json"):
-    creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+  if os.path.exists("cache/token.json"):
+    creds = Credentials.from_authorized_user_file("cache/token.json", SCOPES)
   # If there are no (valid) credentials available, let the user log in.
   if not creds or not creds.valid:
     if creds and creds.expired and creds.refresh_token:
       creds.refresh(Request())
     else:
       flow = InstalledAppFlow.from_client_secrets_file(
-          "credentials.json", SCOPES
+          "cache/credentials.json", SCOPES
       )
       creds = flow.run_local_server(port=0)
     # Save the credentials for the next run
-    with open("token.json", "w") as token:
+    with open("cache/token.json", "w") as token:
       token.write(creds.to_json())
 
 #Converts sheets information to a player and adds them to defunct players list if they are not in the active group
@@ -141,4 +141,6 @@ def post_player_sheet(config, players, songs):
   except HttpError as err:
     print(err)
 
-   
+def post_vote_matrix(config, rounds, songs):
+   return 
+  

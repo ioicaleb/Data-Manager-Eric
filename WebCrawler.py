@@ -1,9 +1,10 @@
-import time, re, os, json
+import time, re, os
 from bs4 import BeautifulSoup, NavigableString
 from Objects import Round, Voter, Song, convert_username_to_name
 from SheetManager import get_defunct_players as gdp
 from ExportManager import export_rounds
 from LoginManager import login, use_previous_login
+from JSONManager import *
 
 def get_round_results(driver, config):
     active_players = config.get("username-player_name")
@@ -110,8 +111,7 @@ def get_recent_round_number(driver):
     return round_number
 
 def get_missing_rounds(driver, config, missing_rounds):  
-    with open("rounds.json", 'r') as f:
-            rounds = json.load(f)
+    rounds = read_json("rounds")
     time.sleep(5)
     soup = BeautifulSoup(driver.page_source, "html.parser")
     status_pattern = re.compile(r"status:\s*'COMPLETE'")
@@ -132,15 +132,11 @@ def get_missing_rounds(driver, config, missing_rounds):
     return rounds
 
 def get_defunct_players(config):
-    cache_file = "defunct_players.json"
     players = []
-    if os.path.exists(cache_file):
-        with open(cache_file, 'r') as f:
-            players = json.load(f)
+    players = read_json("defunct_players")
     if not players:
         players = gdp(config)
-        with open(cache_file, 'w') as f:
-            json.dump(players, f)
+        write_json("defunct_players")
     return players
     
 
