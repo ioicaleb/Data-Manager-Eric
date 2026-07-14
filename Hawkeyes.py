@@ -13,7 +13,7 @@ from WebCrawler import get_results, check_for_new_rounds
 from ExportManager import export_players, export_songs
 from SheetManager import set_spreadsheet_id, post_player_sheet, post_vote_matrix
 from JSONManager import read_json
-from Backups.StatManager import vote_matrix_analysis
+from StatManager import vote_matrix_analysis
 import sys
 
 def main():
