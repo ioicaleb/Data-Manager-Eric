@@ -7,8 +7,8 @@ This module handles exporting data from the ML WebCrawler to JSON files:
 - Exporting round information
 """
 
-from Objects import Player
-from JSONManager import *
+from DataCollection.Objects import Player
+from DataCollection.JSONManager import *
 
 # Global variable to cache songs data
 songs = []

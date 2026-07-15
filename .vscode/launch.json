@@ -2,10 +2,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Hawkeyes",
+            "name": "Python: ML WebCrawler",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/Hawkeyes.py",  // Update path if needed
+            "program": "${workspaceFolder}/Main.py",  // Update path if needed
             "console": "integratedTerminal",
             "args": [],  // Add arguments if needed
             "cwd": "${workspaceFolder}",  // Set working directory

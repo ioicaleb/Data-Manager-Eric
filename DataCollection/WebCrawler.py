@@ -19,11 +19,11 @@ import time
 import re
 import os
 from bs4 import BeautifulSoup, NavigableString
-from Objects import Round, Voter, Song, convert_username_to_name
-from SheetManager import get_defunct_players as gdp
-from ExportManager import export_rounds
-from LoginManager import login, use_previous_login
-from JSONManager import *
+from DataCollection.Objects import Round, Voter, Song, convert_username_to_name
+from DataCollection.SheetManager import get_defunct_players as gdp
+from DataCollection.ExportManager import export_rounds
+from DataCollection.LoginManager import login, use_previous_login
+from DataCollection.JSONManager import *
 
 def get_round_results(driver, config):
     """
@@ -373,11 +373,11 @@ import time
 import re
 import os
 from bs4 import BeautifulSoup, NavigableString
-from Objects import Round, Voter, Song, convert_username_to_name
-from SheetManager import get_defunct_players as gdp
-from ExportManager import export_rounds
-from LoginManager import login, use_previous_login
-from JSONManager import *
+from DataCollection.Objects import Round, Voter, Song, convert_username_to_name
+from DataCollection.SheetManager import get_defunct_players as gdp
+from DataCollection.ExportManager import export_rounds
+from DataCollection.LoginManager import login, use_previous_login
+from DataCollection.JSONManager import *
 
 def get_round_results(driver, config):
     """

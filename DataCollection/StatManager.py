@@ -1,4 +1,5 @@
-from ExportManager import get_song
+from DataCollection.ExportManager import get_song
+from DataCollection.JSONManager import read_json
 
 def vote_matrix_analysis(rounds):
     """
@@ -61,15 +62,27 @@ def vote_matrix_analysis(rounds):
             # Process each voter's votes for this song
             for voter in song["voters"]:
                 voter_name = voter["name"]
+                if voter_name != "[Left the League]":
                 
-                # Initialize voter data if not already present
-                # Skip voters who left the league
-                if voter_name not in voter_dict:
-                    voter_dict[voter_name] = {player: 0 for player in players}
-                
-                # Add votes from this voter to the target player
-                voter_dict[voter_name][player_name] += voter["votes"]
+                # Initialize voter if not already present
+                    if voter_name not in voter_dict:
+                        voter_dict[voter_name] = {player: 0 for player in players}
+                    
+                    # Add votes from this voter to the target player
+                    voter_dict[voter_name][player_name] += voter["votes"]
+
+        dp_results = read_json("hardcoded_results")
         
+        for dp_round in dp_results:
+            if int(dp_round["round"]) == round["round_number"]:
+                for dp in dp_round["players"]:
+                    voter_name = next(iter(dp))
+                    if voter_name not in voter_dict:
+                        voter_dict[voter_name] = dp[voter_name]
+            else:
+                continue
+            break
+
         # Format the final structure for voters
         vm["voters"] = []
         # Sort voters for consistent ordering
@@ -90,3 +103,48 @@ def vote_matrix_analysis(rounds):
         
         vm_rounds.append(vm)
     return vm_rounds
+
+def master_voter_matrix(rounds):
+    matrix = [[""], ]
+    players = []
+    voter_dict = {}
+
+    for round in rounds:
+        for player in round["players"]:
+            if player not in players:
+                players.append(player)
+    
+    players.sort() 
+    for player in players:
+        matrix[0].append(player)
+
+    for round in rounds:           
+        for voter in round["voters"]:
+            voter_name = voter["name"]
+            
+            # Initialize voter if not already present
+            if voter_name not in voter_dict:
+                voter_dict[voter_name] = {player: 0 for player in players}
+
+            # Add votes from this voter to the target player
+            for vote in voter["votes"]:
+                voter_dict[voter_name][vote["player"]] += vote["votes"]
+    
+    
+    # Sort voters for consistent ordering
+    voter_dict = dict(sorted(voter_dict.items()))
+    for voter_name, votes in voter_dict.items():
+        voter_votes = []
+        # For each player, create a vote entry
+        for target_player in players:
+            voter_votes.append({
+                "player": target_player,
+                "votes": votes[target_player]
+            })
+        # Add voter entry to the vote matrix
+        matrix.append({
+            "name": voter_name,
+            "votes": voter_votes
+        })
+
+    return matrix

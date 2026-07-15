@@ -9,14 +9,14 @@ Functions:
     main() - Main execution function that orchestrates the crawling process
 """
 
-from WebCrawler import get_results, check_for_new_rounds
-from ExportManager import export_players, export_songs
-from SheetManager import set_spreadsheet_id, post_player_sheet, post_vote_matrix
-from JSONManager import read_json
-from StatManager import vote_matrix_analysis
+from DataCollection.WebCrawler import get_results, check_for_new_rounds
+from DataCollection.ExportManager import export_players, export_songs
+from DataCollection.SheetManager import set_spreadsheet_id, post_player_sheet, post_vote_matrix, post_master_matrix
+from DataCollection.JSONManager import read_json
+from DataCollection.StatManager import vote_matrix_analysis, master_voter_matrix
 import sys
 
-def main():
+def collect_data():
     """
     Main execution function that orchestrates the crawling process.
     
@@ -84,16 +84,7 @@ def main():
         # If analysis was successful, post to spreadsheet
         if vm_results:
             post_vote_matrix(vm_results)
+            post_master_matrix(master_voter_matrix(vm_results))
     else:
         # If crawling failed, exit with error
         print("Crawl failed")
-        sys.exit()
-
-if __name__ == "__main__":
-    """
-    Entry point of the application.
-    
-    This block ensures that main() is only called when the script is 
-    executed directly (not imported as a module).
-    """
-    main()

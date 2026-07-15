@@ -16,7 +16,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-from Objects import Player_Defunct, Song
+from DataCollection.Objects import Player_Defunct, Song
 
 # Google Sheets API scope
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -307,6 +307,53 @@ def post_vote_matrix(vm_rounds: List[Dict[str, Any]]) -> None:
                 # Reset for next batch
                 values = []
                 matrices = []
+        
+        print("Vote matrix successfully updated.")
+
+    except HttpError as err:
+        print(f"An error occurred: {err}")
+
+def post_master_matrix(matrix_data):
+    print("Preparing data to be written as vote matrix")
+    global creds
+    global spreadsheet_id
+
+    verify_credentials()
+
+    try:
+        service = build("sheets", "v4", credentials=creds)
+        values = []        
+        matrix = []  # Start with empty first row
+        
+        # Add voter data
+        for voter in matrix_data:
+            row = []
+            if isinstance(voter, list):
+                # Add player names as column headers
+                matrix.append(matrix_data[0])
+            else:
+                row = [voter["name"]]
+                for player in voter["votes"]:
+                    row.append(player["votes"])
+                matrix.append(row)
+
+        
+        # Add to values payload
+        values.append({
+            "range": f"Vote Matrix!B2:Q",
+            "values": matrix
+        })
+        
+        # Execute batch update
+        body = {
+            "valueInputOption": "RAW",
+            "data": values
+        }
+        
+        service.spreadsheets().values().batchUpdate(
+            spreadsheetId=spreadsheet_id, 
+            body=body
+        ).execute()
         
         print("Vote matrix successfully updated.")
 
