@@ -1,0 +1,500 @@
+[
+    {
+        "round" : "1",
+        "players":
+            [
+                {
+                    "Lindsay": {
+                        "Caleb": 1,
+                        "Lindsay": 0,
+                        "Magnolia": 4,
+                        "Mike": 2,
+                        "Saa": 3
+                    }
+
+                },
+                {
+                    "Magnolia": {
+                        "Caleb": 2,
+                        "Lindsay": 3,
+                        "Magnolia": 0,
+                        "Mike": 2,
+                        "Saa": 3
+                    }
+                }
+            ]
+    },
+    {
+        "round" : "2",
+        "players":
+            [
+                {
+                    "Lindsay": {
+                        "Caleb": 0,
+                        "Dorothy": 0,
+                        "Lia": 2,
+                        "Lindsay": 0,
+                        "Magnolia": 1,
+                        "Mike": 2,
+                        "Ola": 2,
+                        "Saa": 1,
+                        "Steve": 2,
+                        "Tobi": 2
+                    }
+                },
+                {
+                    "Magnolia": {
+                        "Caleb": 1,
+                        "Dorothy": 2,
+                        "Lia": 0,
+                        "Lindsay": 2,
+                        "Magnolia": 0,
+                        "Mike": 1,
+                        "Ola": 2,
+                        "Saa": 1,
+                        "Steve": 2,
+                        "Tobi": 1
+                    }
+                }
+            ]
+    },
+    {
+        "round" : "3",
+        "players":
+            [
+                {
+                    "Lindsay": {
+                        "Amanda": 2,
+                        "Caleb": 0,
+                        "Dorothy": 0,
+                        "Lia": 2,
+                        "Lindsay": 0,
+                        "Magnolia": 2,
+                        "Mike": 1,
+                        "Ola": 1,
+                        "Saa": 2,
+                        "Sarah": 0,
+                        "Steve": 1,
+                        "Tobi": 1
+                    }
+
+                },
+                {
+                    "Magnolia": {
+                        "Amanda": 1,
+                        "Caleb": 0,
+                        "Dorothy": 1,
+                        "Lia": 1,
+                        "Lindsay": 2,
+                        "Magnolia": 0,
+                        "Mike": 0,
+                        "Ola": 1,
+                        "Saa": 2,
+                        "Sarah": 2,
+                        "Steve": 1,
+                        "Tobi": 1
+                    }
+                }
+            ]
+    },
+    {
+        "round" : "4",
+        "players":
+            [
+                {
+                    "Lindsay": {
+                        "Amanda": 1,
+                        "Caleb": 1,
+                        "Dorothy": 1,
+                        "Lia": 1,
+                        "Lindsay": 0,
+                        "Magnolia": 0,
+                        "Mike": 1,
+                        "Ola": 3,
+                        "Saa": 2,
+                        "Sarah": 2,
+                        "Steve": 3,
+                        "Tobi": 0
+                    }
+
+                },
+                {
+                    "Magnolia": {
+                        "Amanda": 1,
+                        "Caleb": 2,
+                        "Dorothy": 2,
+                        "Lia": 1,
+                        "Lindsay": 2,
+                        "Magnolia": 0,
+                        "Mike": 1,
+                        "Ola": 0,
+                        "Saa": 2,
+                        "Sarah": 2,
+                        "Steve": 0,
+                        "Tobi": 2
+                    }
+                }
+            ]
+    },
+    {
+        "round" : "5",
+        "players":
+            [
+                {
+                    "Lindsay": {
+                        "Amanda": 0,
+                        "Caleb": 0,
+                        "Dorothy": 0,
+                        "Lia": 1,
+                        "Lindsay": 0,
+                        "Magnolia": 2,
+                        "Mike": 2,
+                        "Ola": 3,
+                        "Saa": 2,
+                        "Sarah": 1,
+                        "Steve": 2,
+                        "Tobi": 2
+                    }
+
+                },
+                {
+                    "Magnolia": {
+                        "Amanda": 0,
+                        "Caleb": 0,
+                        "Dorothy": 1,
+                        "Lia": 2,
+                        "Lindsay": 4,
+                        "Magnolia": 0,
+                        "Mike": 0,
+                        "Ola": 1,
+                        "Saa": 3,
+                        "Sarah": 2,
+                        "Steve": 1,
+                        "Tobi": 1
+                    }
+                }
+            ]
+    },
+    {
+        "round" : "6",
+        "players":
+            [
+                {
+                    "Lindsay": {
+                        "Amanda": 2,
+                        "Caleb": 1,
+                        "Dorothy": 1,
+                        "Lia": 2,
+                        "Lindsay": 0,
+                        "Magnolia": 3,
+                        "Mike": 2,
+                        "Ola": 1,
+                        "Rick": 0,
+                        "Saa": 2,
+                        "Sarah": 2,
+                        "Steve": 1,
+                        "Tobi": 1
+                    }
+
+                },
+                {
+                    "Magnolia": {
+                        "Amanda": 1,
+                        "Caleb": 1,
+                        "Dorothy": 3,
+                        "Lia": 3,
+                        "Lindsay": 2,
+                        "Magnolia": 0,
+                        "Mike": 2,
+                        "Ola": 2,
+                        "Rick": 0,
+                        "Saa": 0,
+                        "Sarah": 0,
+                        "Steve": 4,
+                        "Tobi": 0
+                    }
+                }
+            ]
+    },
+    {
+        "round" : "7",
+        "players":
+            [
+                {
+                    "Lindsay": {
+                        "Amanda": 1,
+                        "Caleb": 3,
+                        "Dorothy": 2,
+                        "Lia": 0,
+                        "Lindsay": 0,
+                        "Magnolia": 1,
+                        "Mike": 3,
+                        "Ola": 0,
+                        "Rick": 2,
+                        "Rose": 1,
+                        "Saa": 2,
+                        "Sarah": 2,
+                        "Steve": 1,
+                        "Tobi": 0
+                    }
+
+                },
+                {
+                    "Magnolia": {
+                        "Amanda": 0,
+                        "Caleb": 0,
+                        "Dorothy": 0,
+                        "Lia": 5,
+                        "Lindsay": 0,
+                        "Magnolia": 0,
+                        "Mike": 0,
+                        "Ola": 0,
+                        "Rick": 2,
+                        "Rose": 5,
+                        "Saa": 0,
+                        "Sarah": 0,
+                        "Steve": 0,
+                        "Tobi": 6
+                    }
+                }
+            ]
+    },
+    {
+        "round" : "8",
+        "players":
+            [
+                {
+                    "Lindsay": {
+                        "Amanda": 3,
+                        "Caleb": 0,
+                        "Dorothy": 1,
+                        "Lia": 1,
+                        "Lindsay": 0,
+                        "Magnolia": 3,
+                        "Mike": 1,
+                        "Ola": 1,
+                        "Rick": 1,
+                        "Rose": 1,
+                        "Saa": 2,
+                        "Sarah": 1,
+                        "Steve": 2,
+                        "Tobi": 1
+                    }
+
+                },
+                {
+                    "Magnolia": {
+                        "Amanda": 1,
+                        "Caleb": 1,
+                        "Dorothy": 0,
+                        "Lia": 0,
+                        "Lindsay": 1,
+                        "Magnolia": 0,
+                        "Mike": 0,
+                        "Ola": 4,
+                        "Rick": 1,
+                        "Rose": 3,
+                        "Saa": 2,
+                        "Sarah": 2,
+                        "Steve": 2,
+                        "Tobi": 1
+                    }
+                }
+            ]
+    },
+    {
+        "round" : "9",
+        "players":
+            [
+                {
+                    "Lindsay": {
+                        "Amanda": 1,
+                        "Caleb": 3,
+                        "Dorothy": 1,
+                        "Lia": 2,
+                        "Lindsay": 0,
+                        "Magnolia": 2,
+                        "Mike": 1,
+                        "Ola": 2,
+                        "Rick": 1,
+                        "Rose": 0,
+                        "Saa": 1,
+                        "Sarah": 1,
+                        "Steve": 1,
+                        "Tobi": 2
+                    }
+
+                },
+                {
+                    "Magnolia": {
+                        "Amanda": 2,
+                        "Caleb": 3,
+                        "Dorothy": 0,
+                        "Lia": 0,
+                        "Lindsay": 3,
+                        "Magnolia": 0,
+                        "Mike": 4,
+                        "Ola": 2,
+                        "Rick": 0,
+                        "Rose": 2,
+                        "Saa": 1,
+                        "Sarah": 0,
+                        "Steve": 1,
+                        "Tobi": 0
+                    }
+                }
+            ]
+    },
+    {
+        "round" : "10",
+        "players":
+            [
+                {
+                    "Lindsay": {
+                        "Amanda": 1,
+                        "Caleb": 1,
+                        "Lia": 2,
+                        "Lindsay": 0,
+                        "Magnolia": 1,
+                        "Mike": 2,
+                        "Ola": 2,
+                        "Rick": 3,
+                        "Rose": 2,
+                        "Saa": 2,
+                        "Sarah": 1,
+                        "Steve": 0,
+                        "Tobi": 1
+                    }
+
+                },
+                {
+                    "Magnolia": {
+                        "Amanda": 6,
+                        "Caleb": 0,
+                        "Lia": 0,
+                        "Lindsay": 0,
+                        "Magnolia": 0,
+                        "Mike": 0,
+                        "Ola": 3,
+                        "Rick": 4,
+                        "Rose": 0,
+                        "Saa": 1,
+                        "Sarah": 3,
+                        "Steve": 1,
+                        "Tobi": 0
+                    }
+                }
+            ]
+    },
+    {
+        "round" : "11",
+        "players":
+            [
+                {
+                    "Lindsay": {
+                        "Amanda": 1,
+                        "Caleb": 0,
+                        "Lia": 0,
+                        "Lindsay": 0,
+                        "Magnolia": 2,
+                        "Mike": 2,
+                        "Ola": 0,
+                        "Rick": 2,
+                        "Rose": 2,
+                        "Saa": 3,
+                        "Sarah": 1,
+                        "Steve": 2,
+                        "Tobi": 3
+                    }
+
+                },
+                {
+                    "Magnolia": {
+                        "Amanda": 1,
+                        "Caleb": 2,
+                        "Lia": 2,
+                        "Lindsay": 1,
+                        "Magnolia": 0,
+                        "Mike": 0,
+                        "Ola": 1,
+                        "Rick": 6,
+                        "Rose": 1,
+                        "Saa": 1,
+                        "Sarah": 2,
+                        "Steve": 1,
+                        "Tobi": 0
+                    }
+                }
+            ]
+    },
+    {
+        "round" : "12",
+        "players":
+            [
+                {
+                    "Lindsay": {
+                        "Amanda": 1,
+                        "Caleb": 1,
+                        "Dorothy": 0,
+                        "Lia": 2,
+                        "Lindsay": 0,
+                        "Magnolia": 2,
+                        "Mike": 2,
+                        "Nate": 1,
+                        "Ola": 1,
+                        "Rick": 3,
+                        "Rose": 1,
+                        "Saa": 2,
+                        "Sarah": 1,
+                        "Steve": 2,
+                        "Tobi": 1
+                    }
+
+                },
+                {
+                    "Magnolia": {
+                        "Amanda": 0,
+                        "Caleb": 0,
+                        "Dorothy": 0,
+                        "Lia": 3,
+                        "Lindsay": 0,
+                        "Magnolia": 0,
+                        "Mike": 0,
+                        "Nate": 0,
+                        "Ola": 0,
+                        "Rick": 0,
+                        "Rose": 3,
+                        "Saa": 6,
+                        "Sarah": 3,
+                        "Steve": 3,
+                        "Tobi": 2
+                    }
+                }
+            ]
+    },
+    {
+        "round" : "13",
+        "players":
+            [
+                {
+                    "Magnolia": {
+                        "Amanda": 0,
+                        "Caleb": 0,
+                        "Dorothy": 0,
+                        "Lia": 6,
+                        "Lindsay": 1,
+                        "Magnolia": 0,
+                        "Mike": 4,
+                        "Nate": 0,
+                        "Ola": 0,
+                        "Rick": 1,
+                        "Rose": 2,
+                        "Saa": 0,
+                        "Sarah": 1,
+                        "Steve": 4,
+                        "Tobi": 1
+                    }
+                }
+            ]
+    }
+]

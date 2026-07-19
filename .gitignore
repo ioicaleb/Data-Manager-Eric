@@ -162,4 +162,7 @@ cython_debug/
 # Flet
 .flet/
 
-cache/*
+
+cache/config.json
+cache/credentials.json
+cache/token.json
