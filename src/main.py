@@ -177,6 +177,7 @@ async def loading(page: ft.Page):
 
             from cache_builder import build_static_dashboard_cache
             await asyncio.to_thread(build_static_dashboard_cache)
+            await init_search_cache
 
             save_app_data()
             page.controls.clear()

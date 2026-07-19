@@ -116,12 +116,94 @@ def get_player_avatar(player):
         if player_data.get("name") == player:
             return player_data.get("avatar")
         
-def search_songs(keyword):
-    data = []
-    
-    global songs
-    for song in songs:
-        if keyword.lower() in song["artist"].lower() or keyword.lower() in song["album"].lower() or keyword.lower() in song["name"].lower():
-            data.append(song)
+import re
 
-    return data
+# Global cache to hold pre-computed search index mappings
+# Keys will be lowercased individual words, values will be lists of song references
+_search_index = None
+
+def init_search_cache():
+    """
+    Call this function ONCE when your app boots up (e.g., in main() or during data loading).
+    It creates an inverted index, mapping single keywords to their respective song dicts.
+    """
+    global _search_index
+    global songs
+    _search_index = {}
+    
+    # Simple regex to split words by spaces and common punctuation tokens
+    word_splitter = re.compile(r'[\s\-:,\.\(\)\[\]/\\]+')
+    
+    for song in songs:
+        # 1. Combine fields into a single block of searchable text
+        searchable_text = f"{song.get('name', '')} {song.get('artist', '')} {song.get('album', '')}".lower()
+        
+        # 2. Extract individual words/tokens to map as index keys
+        words = set(word_splitter.split(searchable_text))
+        
+        # 3. Associate this song reference with each extracted word token
+        for word in words:
+            if not word:
+                continue
+            # Keep index structures small by grouping references together
+            if word not in _search_index:
+                _search_index[word] = []
+            _search_index[word].append(song)
+
+def search_songs(keyword):
+    """
+    Blazing fast O(1) keyword index query that eliminates loop filters and string allocations.
+    """
+    global songs, _search_index
+    
+    # Fallback safety check: build index on the fly if init_search_cache wasn't triggered
+    if _search_index is None:
+        init_search_cache(songs)
+        
+    clean_keyword = keyword.strip().lower()
+    if not clean_keyword:
+        return []
+        
+    # Split the incoming query string into individual filter tokens
+    word_splitter = re.compile(r'[\s\-:,\.\(\)\[\]/\\]+')
+    query_words = [w for w in word_splitter.split(clean_keyword) if w]
+    
+    if not query_words:
+        return []
+        
+    # 1. Fetch matched song arrays for each unique query word token
+    matched_lists = []
+    for q_word in query_words:
+        # Check if the word exactly matches an index key
+        if q_word in _search_index:
+            matched_lists.append(_search_index[q_word])
+        else:
+            # OPTIONAL PARTIAL MATCH FALLBACK:
+            # If an exact word match isn't found, find keys that contain the token
+            partial_matches = []
+            for idx_key in _search_index.keys():
+                if q_word in idx_key:
+                    partial_matches.extend(_search_index[idx_key])
+            
+            if partial_matches:
+                matched_lists.append(partial_matches)
+            else:
+                # If any single word from the multi-word query yield 0 results, 
+                # the total intersection will be empty anyway, return early.
+                return []
+                
+    # 2. Compute the intersection (AND logic) across all matched word collections
+    # This ensures searching "The Beatles" returns only songs matching BOTH terms
+    result_set = set(id(s) for s in matched_lists[0])
+    song_lookup = {id(s): s for s in matched_lists[0]}
+    
+    for next_list in matched_lists[1:]:
+        current_ids = set(id(s) for s in next_list)
+        for s in next_list:
+            song_lookup[id(s)] = s
+        result_set.intersection_update(current_ids)
+        if not result_set:
+            break
+            
+    # Return the real underlying dictionary objects cleanly
+    return [song_lookup[s_id] for s_id in result_set]
