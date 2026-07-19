@@ -20,8 +20,6 @@ def generate_profile_tab(page: ft.Page, return_callback):
 
         name = player.get("name")
 
-        # 2. Shift all heavy search filtering tasks over to a background thread pool
-        # This keeps the main Flet event loop completely clear and smooth
         player_stats_dict = await asyncio.to_thread(read_json, "precomputed_stats")
         player_stats_data = player_stats_dict.get(name, {}) if player_stats_dict else {}
 
@@ -31,7 +29,6 @@ def generate_profile_tab(page: ft.Page, return_callback):
         votes_from_data = await asyncio.to_thread(find_songs_by_voter, name)
         votes_to_data = await asyncio.to_thread(find_player_songs_by_round, name)
 
-        # 3. Clear loading indicators and proceed with UI population using the gathered data
         page.splash = None
         page.controls.clear()
 
@@ -697,7 +694,7 @@ def generate_profile_tab(page: ft.Page, return_callback):
                         title=ft.Text(name, size=22, weight=ft.FontWeight.BOLD),
                         subtitle=ft.Text(f"Votes: {player_object.get('votes_to', 0)} • Click to view full profile", size=16),
                         trailing=ft.Icon(ft.Icons.CHEVRON_RIGHT),
-                        on_click=lambda e, p_obj=player_object: get_player_profile(p_obj)
+                        on_click=lambda e, p_obj=player_object: page.run_task(get_player_profile, p_obj)
                     )
                 )
 
