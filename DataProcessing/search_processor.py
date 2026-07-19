@@ -158,7 +158,7 @@ def search_songs(keyword):
     
     # Fallback safety check: build index on the fly if init_search_cache wasn't triggered
     if _search_index is None:
-        init_search_cache(songs)
+        init_search_cache()
         
     clean_keyword = keyword.strip().lower()
     if not clean_keyword:
