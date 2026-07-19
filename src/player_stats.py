@@ -162,7 +162,6 @@ def generate_profile_tab(page: ft.Page, return_callback):
                 votes_from_list.content.controls.append(
                     ft.Container(
                         content = ft.Text(song_details, size=20),
-                        padding =ft.Padding(0, 0, 0, 15),
                         width = page.width / 2
                     )
                 )
@@ -356,7 +355,7 @@ def generate_profile_tab(page: ft.Page, return_callback):
                 ],
                 spacing=5
             ),
-            margin=ft.Margin(0, 0, 0, 20)
+            margin=ft.Margin(0, 0, 0, 15)
         )
 
         best_round_dict = player_stats_data.get("best_round", {})
@@ -380,7 +379,7 @@ def generate_profile_tab(page: ft.Page, return_callback):
                 ],
                 spacing=5
             ),
-            margin=ft.Margin(0, 0, 0, 20)
+            margin=ft.Margin(0, 0, 0, 15)
         )
 
         favorite_artist_dict = player_stats_data.get("favorite_artist", ["Unknown", {"appearances": 0, "songs": []}])
@@ -403,7 +402,7 @@ def generate_profile_tab(page: ft.Page, return_callback):
                 ],
                 spacing=5
             ),
-            margin=ft.Margin(0, 0, 0, 20)
+            margin=ft.Margin(0, 0, 0, 15)
         )
 
         top_artist_dict = player_stats_data.get("top_artist", ["Unknown", {"votes": 0, "songs": []}])
@@ -426,15 +425,14 @@ def generate_profile_tab(page: ft.Page, return_callback):
                 ],
                 spacing=5
             ),
-            margin=ft.Margin(0, 0, 0, 20)
+            margin=ft.Margin(0, 0, 0, 15)
         )
 
         player_stats_list = ft.ListView(
             expand=True,
             spacing=15,
-            padding=20,
+            padding=ft.Padding(20, 0, 20, 20),
             scroll=ft.ScrollMode.HIDDEN,
-            # item_extent=None, # Leave dynamic or set a fixed height if items match exactly
             controls=[
                 favorite_player_container,
                 top_player_container,
@@ -518,7 +516,6 @@ def generate_profile_tab(page: ft.Page, return_callback):
             tooltip="Toggle Dark Mode"
         )
         
-
         profile_view = ft.Column(
             expand=True,
             controls=[
@@ -581,8 +578,10 @@ def generate_profile_tab(page: ft.Page, return_callback):
                         ),
                         ft.VerticalDivider(width=40, color=ft.Colors.TRANSPARENT),
                         ft.Container(
-                            margin=ft.Margin(80, 10, 0, 0),
+                            margin=ft.Margin(80, 0, 0, 0),
+                            expand= True,
                             content=ft.Column(
+                                expand = True,
                                 controls=[
                                     top_songs,
                                     all_songs,

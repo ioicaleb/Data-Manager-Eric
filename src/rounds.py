@@ -52,14 +52,13 @@ def generate_rounds_tab(page: ft.Page):
         
         round_info.controls.append(round_songs)
 
-
         round_view = ft.Container(
             content = ft.Column(
                 controls= [ 
                     ft.Column(
                         controls=[round_header, ft.Container(height=2), round_info],
                         spacing=10,
-                        margin = ft.Margin(120, 0, 0, 0),
+                        margin = ft.Margin(10, 0, 0, 0),
                         expand= True
                     ),
                 ],
@@ -115,42 +114,40 @@ def generate_rounds_tab(page: ft.Page):
         
         page.update()
 
-    navigation_menu_container = ft.Container(
-        margin=ft.Margin(60, 0, 0, 0),
-        content=ft.Column(
-            controls=[
-                ft.TextButton(
-                    content=ft.Text(
-                        title, 
-                        size=24, 
-                        weight=ft.FontWeight.BOLD,
-                        color=ft.Colors.ON_SURFACE
-                    ),
-                    on_click=handle_menu_click,
-                    style=ft.ButtonStyle(padding=0)
-                ) for title in views_map.keys()
-            ],
-            alignment=ft.MainAxisAlignment.START,
-            spacing=15,
-            scroll=ft.ScrollMode.HIDDEN
-        )
+    navigation_menu = ft.Column(
+        controls=[],
+        alignment=ft.MainAxisAlignment.START,
+        spacing=15,
+        scroll=ft.ScrollMode.HIDDEN
     )
 
-    navigation_menu = navigation_menu_container.content
+    for i, title in enumerate(views_map.keys()):
+        navigation_menu.controls.append(
+            ft.TextButton(
+                content=ft.Text(
+                    title, 
+                    size=24, 
+                    weight=ft.FontWeight.BOLD,
+                    color=ft.Colors.ON_SURFACE,
+                ),
+                on_click=handle_menu_click,
+                style=ft.ButtonStyle(padding=0)
+            )
+        )
 
     main_view = ft.Row(
         vertical_alignment=ft.CrossAxisAlignment.START,
         controls=[
             ft.Container(
-                content= navigation_menu,
-                width= 180,
-                margin= ft.Margin(20, 10, 0, 0)   
+                content=navigation_menu,
+                width=180,
+                margin=ft.Margin(20, 10, 0, 0)
             ),
             ft.VerticalDivider(width=40, color=ft.Colors.TRANSPARENT),
             content_stack
         ],
         alignment=ft.MainAxisAlignment.START,
-        expand= True
+        expand=True
     )
 
     rounds_container = ft.Container(
