@@ -200,8 +200,8 @@ async def loading(page: ft.Page):
 if __name__ == "__main__":
     port_to_use = int(os.environ.get("PORT", 8502)) 
     
-    ft.app(
-        target=main, 
+    ft.run(
+        target=loading, 
         view=ft.AppView.WEB_BROWSER,  
         port=port_to_use,                     
         host="0.0.0.0",
