@@ -112,7 +112,7 @@ def generate_profile_tab(page: ft.Page, return_callback):
                 round_block = ft.Column(
                     controls=[
                         ft.Text(
-                            f"Round {round_item.get('round_id')} - {round_item.get("title")}:", 
+                            f"Round {round_item.get('round_id')} - {round_item.get('title')}:", 
                             size=22, 
                             weight=ft.FontWeight.BOLD
                         ),
