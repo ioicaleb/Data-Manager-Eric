@@ -46,11 +46,11 @@ def main(page: ft.Page, start_tab_index=0):
         controls=[
             ft.TabBar(
                 tabs=[
-                    ft.Tab(text="Standings", icon=ft.Icons.LEADERBOARD),
-                    ft.Tab(text="Matrix", icon=ft.Icons.GRID_ON),
-                    ft.Tab(text="Player Stats", icon=ft.Icons.PERSON),
-                    ft.Tab(text="Round Stats", icon=ft.Icons.QUEUE_MUSIC),
-                    ft.Tab(text="Check Song", icon=ft.Icons.MUSIC_NOTE)
+                    ft.Tab(label="Standings", icon=ft.Icons.LEADERBOARD),
+                    ft.Tab(label="Matrix", icon=ft.Icons.GRID_ON),
+                    ft.Tab(label="Player Stats", icon=ft.Icons.PERSON),
+                    ft.Tab(label="Round Stats", icon=ft.Icons.QUEUE_MUSIC),
+                    ft.Tab(label="Check Song", icon=ft.Icons.MUSIC_NOTE)
                 ]
             ),
             ft.TabBarView(
