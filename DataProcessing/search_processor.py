@@ -203,3 +203,9 @@ def search_songs(keyword):
             break
             
     return [id_to_song_lookup[s_id] for s_id in result_ids]
+
+def find_round_by_song_id(song_id):
+    global rounds
+    for round_item in rounds:
+        if song_id in round_item.get("submissions"):
+            return round_item

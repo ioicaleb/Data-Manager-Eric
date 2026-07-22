@@ -1,5 +1,5 @@
 import flet as ft
-from DataProcessing.search_processor import search_songs
+from DataProcessing.search_processor import search_songs, find_round_by_song_id
 
 search_task = None
 
@@ -49,6 +49,11 @@ def generate_songs_tab(page: ft.Page):
             title = song.get("name")
             artist = song.get("artist")
             album = song.get("album")
+            player = song.get("player_name")
+            votes = song.get("votes")
+            round_item = find_round_by_song_id(song.get("id"))
+            round_id = round_item.get("round_number")
+            round_title = round_item.get("title")
 
             song_card = ft.Container(
                 content=ft.Column(
@@ -71,6 +76,28 @@ def generate_songs_tab(page: ft.Page):
                                     controls = [
                                         ft.Icon(ft.Icons.ALBUM, size = 22),
                                         ft.Text(f"Album: {album}", size=18)
+                                    ]
+                                ),
+                                ft.Row(
+                                    controls= [
+                                        ft.Icon(ft.Icons.LOGIN_OUTLINED, size = 22),
+                                        ft.Text(f"Submitted By: {player}", size = 18)
+                                    ]
+                                ),
+                                ft.Row(
+                                    controls = [
+                                        ft.Icon(ft.Icons.PLAYLIST_PLAY, size = 22),
+                                        ft.Text(f"For Round {round_id}: {round_title}", size=18)
+                                    ]
+                                )
+                            ],
+                        ),
+                        ft.Row(
+                            controls = [    
+                                ft.Row(
+                                    controls = [
+                                        ft.Icon(ft.Icons.THUMB_UP_ALT_ROUNDED, size = 22),
+                                        ft.Text(f"It got {votes} points", size=18)
                                     ]
                                 )
                             ],
