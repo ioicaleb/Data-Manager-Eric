@@ -95,7 +95,7 @@ def find_songs_by_voter(voter_name):
             if voter["name"] == voter_name:
                 data.append(song)
 
-    data = sorted(data, key = lambda x: x["player_name"])
+    data = sorted(data, key = lambda x: x["artist"])
     return data
 
 def find_top_songs(voter_name):
