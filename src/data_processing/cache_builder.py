@@ -44,7 +44,7 @@ def build_static_dashboard_cache():
         top_songs_data = find_top_songs(player_name) or []
         all_songs_data = find_songs_by_submitter(player_name) or []
         round_songs_data = find_player_songs_by_round(player_name) or {}
-        votes_from_data = get_votes_from_data(player_name) or []
+        votes_data = get_votes_from_data(player_name) or {}
         if not player_name:
             continue
 
@@ -54,16 +54,15 @@ def build_static_dashboard_cache():
         player_stats_data = process_player_stats(
             player, 
             top_songs_data, 
-            all_songs_data, 
+            all_songs_data,
             round_songs_data, 
-            votes_from_data
+            votes_data
         )
         player["num_comments"] = player_stats_data.get("comments")
         
         player_stats_data["top_songs"] = top_songs_data or []
         player_stats_data["all_songs"] = all_songs_data or []
         player_stats_data["rounds_songs"] = round_songs_data or {}
-        player_stats_data["votes_from"] = votes_from_data or []
         player_stats_data["avatar_url"] = local_web_path
         cached_dashboard[player_name] = player_stats_data
         

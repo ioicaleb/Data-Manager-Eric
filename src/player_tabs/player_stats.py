@@ -1,4 +1,5 @@
 import flet as ft
+from data_processing.search_processor import find_song_by_id
 
 def generate_player_stats(player_stats_data):
     def create_nested_song_card(song_data) -> ft.Column:
@@ -78,7 +79,8 @@ def generate_player_stats(player_stats_data):
             margin=ft.Margin(0, 0, 0, 15)
     )
 
-    best_song = player_stats_data.get("best_song", {})
+    best_song_id = player_stats_data.get("best_song", {})
+    best_song = find_song_by_id(best_song_id)
     best_song_container = ft.Container(
         content=ft.Column(
             controls=[
@@ -99,13 +101,13 @@ def generate_player_stats(player_stats_data):
         margin=ft.Margin(0, 0, 0, 15)
     )
 
-    best_round_dict = player_stats_data.get("best_round", {})
-    round_score = best_round_dict.get("score")
-    round_id = next((k for k in best_round_dict.keys() if k != "score"), None)
-    best_round = best_round_dict.get(round_id, {}) if round_id else {}
+    best_round = player_stats_data.get("best_round", {})
+    round_score = best_round.get("score")
+    round_id = best_round.get("round_id")
 
     best_round_songs_column = ft.Column(spacing=10)
-    for song in best_round.get("songs", []):
+    for song_id in best_round.get("songs", []):
+        song = find_song_by_id(song_id)
         best_round_songs_column.controls.append(create_nested_song_card(song))
 
     best_round_container = ft.Container(

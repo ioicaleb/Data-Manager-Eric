@@ -7,6 +7,7 @@ from player_tabs.round_songs import generate_round_songs
 from player_tabs.votes_from import generate_votes_from
 from player_tabs.votes_to import generate_votes_to
 from player_tabs.player_stats import generate_player_stats
+from player_tabs.votes_songs import generate_votes_songs
 
 def generate_profile_tab(page: ft.Page, return_callback):
     profiles_list = ft.ListView(expand=True, spacing=10, padding=10)
@@ -51,14 +52,17 @@ def generate_profile_tab(page: ft.Page, return_callback):
         votes_from = generate_votes_from(player_stats_data, name)
         votes_to = generate_votes_to(player_stats_data)
         player_stats = generate_player_stats(player_stats_data)
+        votes_songs = generate_votes_songs(player_stats_data, name)
+
 
         views_map = {
-            f"{player.get('name')}'s Stats": player_stats,
-            f"{player.get('name')}'s Songs": all_songs,
+            f"{name}'s Stats": player_stats,
+            f"{name}'s Songs": all_songs,
             "Favorite Songs": top_songs,
             "Songs By Round": round_songs,
-            "How You Voted": votes_from,
-            "Who Voted for You": votes_to,
+            f"Who Voted For {name}": votes_to,
+            f"How {name} Voted": votes_from,
+            f"Songs {name} Voted For": votes_songs
         }
 
         def handle_menu_click(e):
@@ -188,8 +192,9 @@ def generate_profile_tab(page: ft.Page, return_callback):
                                     all_songs,
                                     top_songs,
                                     round_songs,
+                                    votes_to,
                                     votes_from,
-                                    votes_to
+                                    votes_songs
                                 ],
                             ),
                         )

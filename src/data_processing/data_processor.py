@@ -167,12 +167,16 @@ def prepare_master_matrix():
     data = []
     players_data = get_players()
     for player in players_data:
-        player_data = []
-        votes = player["votes"]
-        player_data.append(player["name"])
-        for vote in votes:
-            player_data.append(vote["votes"])
-        data.append(player_data)
+        row = []
+        player_name = player.get("name")
+        votes = read_json(f"precomputed_stats_{player.get('name', 'Unknown')}").get(player_name, {}).get("votes_from_data", {})
+        votes[player_name] = 0
+        votes = sorted(votes.items(), key = lambda x: x[0])
+        row.append(player_name)
+        for player, votes in votes:
+            if player != "Lindsay" and player != "Magnolia":
+                row.append(votes)
+        data.append(row)
 
     return data
 
@@ -194,54 +198,50 @@ def prepare_player_round_info(player):
         data.append(round_data)
     return data
 
-def process_player_stats(player: dict, top_songs_data: dict, all_songs_data: dict, round_songs_data: dict, votes_from_data: dict):
+def process_player_stats(player: dict, top_songs_data: dict, all_songs_data: dict, round_songs_data: dict, votes_data: dict):
     data = {}
     top_votes = 0
     total_votes_given = 0
     times_voted = 0
 
     data["comments"] = 0
+    data["votes_from_data"] = votes_data["votes_from_data"]
+    data["votes_songs"] = votes_data["votes_songs"]
     
-    for op in player["votes"]:
-        if int(op["votes"]) > top_votes:
-            top_votes = int(op["votes"])
-            data["favorite_player"] = op["player"]
-        total_votes_given += int(op["votes"]) 
+    for op, votes in votes_data["votes_to_data"].items():
+        if int(votes) > top_votes:
+            top_votes = votes
+            data["favorite_player"] = op
+        total_votes_given += int(votes) 
 
     top_players = {}
-    for song in top_songs_data:
+    for song_id in top_songs_data:
+        song = find_song_by_id(song_id)
         if song["player_name"] not in top_players.keys():
             top_players[song["player_name"]] = 1
         else:
             top_players[song["player_name"]] += 1
     if top_players:       
         data["top_player"] = sorted(top_players, key=lambda x: x)[0]
-    if all_songs_data:
-        data["best_song"] = all_songs_data[0]
 
-    round_performances = []
-    round_list = get_rounds()
-    for round_item in round_list:
-        round_performance = {
-            round_item["round_number"]: round_item,
-            "score": 0
-        }
-        for song_id in round_item["submissions"]:
-            song = find_song_by_id(song_id)
-            round_performance["score"] += int(song["votes"])
-            voters = song.get("voters")
-            for voter in voters:
-                if voter.get("name") == player.get("name"): 
-                    if int(voter.get("votes")) > 0:
-                        times_voted += 1
-                    if voter["comment"]:
-                        data["comments"] += 1
-        round_performances.append(round_performance)
-    if round_performances:
-        data["best_round"] = sorted(round_performances, key=lambda x: x["score"], reverse=True)[0]
+    best_round_score = 0
+    for round_item in round_songs_data:
+        if round_item.get("songs"):
+            round_total = 0
+            for song_id in round_item["songs"]:
+                song = find_song_by_id(song_id)
+                round_total += song.get("votes")
+            if round_total > best_round_score:
+                best_round_score = round_total
+                data["best_round"] = round_item
+                data["best_round"]["score"] = best_round_score
 
     player_artists = {}
-    for song in all_songs_data:
+    best_song_score = 0
+    for song_id in all_songs_data:
+        song = find_song_by_id(song_id)
+        if(song.get("votes")) > best_song_score:
+            data["best_song"] = song_id
         artist = song["artist"]
         if artist not in player_artists:
             player_artists[artist] = {
@@ -254,6 +254,15 @@ def process_player_stats(player: dict, top_songs_data: dict, all_songs_data: dic
             player_artists[artist]["appearances"] += 1
             player_artists[artist]["songs"].append(song)
             player_artists[artist]["votes"] += song["votes"]
+
+    for song in get_songs():
+        voters = song.get("voters")
+        for voter in voters:
+            if voter.get("name") == player.get("name"): 
+                if int(voter.get("votes")) > 0:
+                    times_voted += 1
+                if voter["comment"]:
+                    data["comments"] += 1
 
     if player_artists:
         data["favorite_artist"] = sorted(player_artists.items(), key=lambda x: x[1]["appearances"], reverse = True)[0]

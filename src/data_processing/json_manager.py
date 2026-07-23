@@ -47,6 +47,5 @@ def write_json(filename, data):
     try:
         with open(file_path, "w", encoding="utf-8") as json_file:
             json.dump(data, json_file, ensure_ascii=False, indent=4)
-        print(f"Successfully wrote data to {file_path}")
     except Exception as e:
         print(f"Error writing to {file_path}: {e}")

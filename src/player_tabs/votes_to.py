@@ -1,4 +1,5 @@
 import flet as ft
+from data_processing.search_processor import find_song_by_id
 
 def generate_votes_to(player_stats_data):
     votes_to_data = player_stats_data.get("rounds_songs") or {}
@@ -31,7 +32,8 @@ def generate_votes_to(player_stats_data):
                 content=ft.Column(controls=[], spacing=10)
             )
 
-            for song in vote_round_item["songs"]:
+            for song_id in vote_round_item["songs"]:
+                song = find_song_by_id(song_id)
                 song_info = ft.Column(
                     controls=[
                         ft.Text(f"{song.get('name')}", size=20, weight=ft.FontWeight.W_500),

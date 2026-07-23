@@ -66,7 +66,7 @@ def find_songs_by_submitter(submitter):
     songs = get_songs()
     for song in songs:
         if submitter.lower() == song["player_name"].lower():
-            data.append(song)
+            data.append(song.get("id"))
     return data
 
 def find_player_songs_by_round(player_name):
@@ -81,7 +81,7 @@ def find_player_songs_by_round(player_name):
         }
         for song in songs:
             if song["id"] in round["submissions"] and song["player_name"] == player_name:
-                song_data["songs"].append(song)    
+                song_data["songs"].append(song.get("id"))    
         data.append(song_data)
     data = sorted(data, key = lambda x: x["round_id"])
     return data
@@ -105,9 +105,8 @@ def find_top_songs(voter_name):
         voters = song["voters"]
         for voter in voters:
             if voter["name"] == voter_name and voter["votes"] == 4:
-                data.append(song)
+                data.append(song.get("id"))
 
-    data = sorted(data, key = lambda x: x["artist"])
     return data
 
 def get_player_avatar(player):
@@ -141,6 +140,8 @@ def init_search_cache():
             if word not in _search_index:
                 _search_index[word] = []
             _search_index[word].append(song)
+
+    print("Search Cache Initialized")
 
 def search_songs(keyword):
     """
@@ -211,16 +212,41 @@ def find_round_by_song_id(song_id):
             return round_item
 
 def get_votes_from_data(player_name):
-    global players
-    if not players:
-        players = read_json("players")
+    global songs
+    if not songs:
+        songs = read_json("songs")
 
-    data = {}
+    data = {
+        "votes_to_data": {},
+        "votes_from_data" : {},
+        "votes_songs": {}
+    }
 
-    for player in players:
-        data[player.get("name")] = 0 
-        vote_info = player.get("votes")
-        for voter in vote_info:
-            if voter["player"] == player_name:
-                data[player.get("name")] += voter.get("votes")
+    votes_to_data = {}
+    votes_from_data = {}
+    votes_songs_data = []
+
+    for song in songs:
+        if song.get("player_name") != player_name:
+            song_submitter = song.get("player_name")
+            votes_info = song.get("voters", {})
+            for voter in votes_info: 
+                voter_name = voter.get("name")
+                if voter_name == player_name:
+                    votes_songs_data.append(song.get("id"))
+                    if song_submitter not in votes_from_data.keys():
+                        votes_from_data[song_submitter] = 0
+                    votes_from_data[song_submitter] += voter.get("votes")
+        else:
+            votes_info = song.get("voters", {})
+            for voter in votes_info: 
+                voter_name = voter.get("name")
+                if voter_name != player_name:
+                    if voter_name not in votes_to_data.keys():
+                        votes_to_data[voter_name] = 0
+                    votes_to_data[voter_name] += voter.get("votes")
+        
+    data["votes_to_data"] = dict(sorted(votes_to_data.items(), key=lambda item: item[1], reverse=True))
+    data["votes_from_data"] = dict(sorted(votes_from_data.items(), key=lambda item: item[1], reverse=True))
+    data["votes_songs"] = votes_songs_data
     return data

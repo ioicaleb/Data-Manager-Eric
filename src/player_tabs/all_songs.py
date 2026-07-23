@@ -1,4 +1,5 @@
 import flet as ft
+from data_processing.search_processor import find_song_by_id
 
 def generate_all_songs(player_stats_data):
     all_songs_data = player_stats_data.get("all_songs") or {}
@@ -13,7 +14,8 @@ def generate_all_songs(player_stats_data):
                 alignment=ft.Alignment.CENTER_LEFT
             )
             
-    for song in all_songs_data:
+    for song_id in all_songs_data:
+        song = find_song_by_id(song_id)
         song_details = (f"{song.get('name')}\n"
                         f"Artist: {song.get('artist')}\n"
                         f"Album: {song.get('album')}\n"
