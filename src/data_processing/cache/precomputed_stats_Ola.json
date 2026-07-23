@@ -1327,17 +1327,17 @@
         ],
         "points_per_vote": 1.59,
         "top_songs": [
-            "nat0327",
             "nat0750",
-            "nat0454",
-            "nat0625",
-            "nat0226",
-            "nat1040",
-            "nat1532",
             "ric0856",
-            "ros0132",
+            "nat0625",
+            "nat0454",
+            "nat1532",
             "saa0256",
-            "ste1728"
+            "nat0327",
+            "nat0226",
+            "ste1728",
+            "nat1040",
+            "ros0132"
         ],
         "all_songs": [
             "ola0227",

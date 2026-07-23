@@ -4,6 +4,9 @@ from data_processing.search_processor import get_rounds, find_song_by_id
 def generate_rounds_tab(page: ft.Page):
     rounds_data = get_rounds()
     views_map = {}
+
+    sort_newest = False
+    current_selected_title = ""
     
     for round_item in rounds_data:
         round_id = round_item["round_number"]
@@ -84,6 +87,11 @@ def generate_rounds_tab(page: ft.Page):
 
         views_map[f"Round {round_item['round_number']} - {round_item['title']}"] = round_view
 
+
+    if views_map:
+        current_selected_title = [list(views_map.keys())[0]]
+        views_map[current_selected_title[0]].visible = True
+
     content_stack = ft.Stack(
         controls=list(views_map.values()),
         expand=True
@@ -113,6 +121,56 @@ def generate_rounds_tab(page: ft.Page):
                 e.control.content.color = ft.Colors.PURPLE_500
         
         page.update()
+
+    def create_menu_button(title):
+        is_active = (title == current_selected_title[0])
+        return ft.TextButton(
+            content=ft.Text(
+                title, 
+                size=24, 
+                weight=ft.FontWeight.BOLD,
+                color=ft.Colors.PURPLE_500 if is_active else ft.Colors.ON_SURFACE,
+            ),
+            on_click=handle_menu_click,
+            style=ft.ButtonStyle(padding=0)
+        )
+
+    def search_and_sort_rounds(e=None):
+        """Filters the menu keys based on text search and orders them by round number."""
+        keyword = search_input.value.strip().lower()
+        navigation_menu.controls.clear()
+        
+        # Sort keys based on round number embedded in the title string
+        # Expected title format: "Round X - Title Here"
+        def extract_round_num(title_str):
+            try:
+                return int(title_str.split(" - ")[0].replace("Round ", ""))
+            except ValueError:
+                return 0
+
+        sorted_titles = sorted(
+            views_map.keys(), 
+            key=extract_round_num, 
+            reverse=sort_newest
+        )
+
+        for title in sorted_titles:
+            if not keyword or keyword in title.lower():
+                navigation_menu.controls.append(create_menu_button(title))
+        navigation_menu.update()
+
+    def toggle_sort(e):
+        """Flips the sort direction state and updates button icon + UI menu."""
+        nonlocal sort_newest
+        sort_newest = not sort_newest
+        if sort_newest:
+            sort_button.icon = ft.Icons.ARROW_DOWNWARD
+            sort_button.content.value = "Sorted by: Oldest First"
+        else:
+            sort_button.icon = ft.Icons.ARROW_UPWARD
+            sort_button.content.value = "Sorted by: Newest First"
+        sort_button.update()
+        search_and_sort_rounds(None)
 
     navigation_menu = ft.Column(
         controls=[],
@@ -159,6 +217,14 @@ def generate_rounds_tab(page: ft.Page):
             on_click = lambda _: (setattr(search_input, "value", ""), search_rounds(None))
         )
 
+    sort_button = ft.TextButton(
+        content=ft.Text("Sorted by: Newest First", weight = ft.FontWeight.W_500),
+        icon=ft.Icons.ARROW_DOWNWARD,
+        icon_color=ft.Colors.PURPLE_500,
+        on_click=toggle_sort,
+        style=ft.ButtonStyle(padding=ft.Padding(5, 0, 0, 0))
+    )
+
     sidebar_layout = ft.Column(
         controls=[
             ft.Row(
@@ -166,10 +232,11 @@ def generate_rounds_tab(page: ft.Page):
                 alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER
             ),
-            navigation_menu # This handles its own scrolling now
+            sort_button,
+            navigation_menu
         ],
         spacing=10,
-        expand=True # Ensures the sidebar expands vertically
+        expand=True
     )
 
     main_view = ft.Row(
