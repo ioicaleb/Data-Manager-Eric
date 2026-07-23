@@ -36,12 +36,11 @@ def generate_votes_songs(player_stats_data, player_name):
                 )
                 if voter.get("comment"):
                     song_info.controls.append(ft.Text(f"Comment: {voter.get('comment')}", size=18))
-            break
+                break
         if(song_info):
             song_details.content.controls.append(song_info)
-        
-        votes_songs_list.content.controls.append(song_details)
-        votes_songs_list.content.controls.append(
+            votes_songs_list.content.controls.append(song_details)
+            votes_songs_list.content.controls.append(
             ft.Divider(height=10, thickness=1, color=ft.Colors.GREY_800)
         )
 
