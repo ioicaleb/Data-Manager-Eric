@@ -29,7 +29,7 @@ def generate_votes_songs(player_stats_data, player_name):
                         ft.Text(f"{song.get('name')}", size=24, weight=ft.FontWeight.W_500),
                         ft.Text(f"Artist: {song.get('artist')}", size=20),
                         ft.Text(f"Album: {song.get('album')}", size=20),
-                        ft.Text(f"Submitted By: {song.get("player_name")}", size = 20),
+                        ft.Text(f"Submitted By: {song.get('player_name')}", size = 20),
                         ft.Text(f"Votes: {voter.get('votes')}", size=20),
                     ],
                     spacing = 2,
