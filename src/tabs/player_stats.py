@@ -241,7 +241,6 @@ def generate_profile_tab(page: ft.Page, return_callback):
                     ft.ListTile(
                         leading=avatar,
                         title=ft.Text(str(name), size=22, weight=ft.FontWeight.BOLD),
-                        subtitle=ft.Text(f"Click to view full profile", size=16),
                         trailing=ft.Icon(ft.Icons.CHEVRON_RIGHT),
                         on_click=lambda e, p_obj=player_object: page.run_task(get_player_profile, p_obj)
                     )
@@ -287,7 +286,6 @@ def generate_profile_tab(page: ft.Page, return_callback):
                     ft.ListTile(
                         leading=avatar,
                         title=ft.Text(name, size=22, weight=ft.FontWeight.BOLD),
-                        subtitle=ft.Text(f"Click to view full profile", size=16),
                         trailing=ft.Icon(ft.Icons.CHEVRON_RIGHT),
                         on_click=lambda e, p_obj=player_object: page.run_task(get_player_profile, p_obj)
                     )

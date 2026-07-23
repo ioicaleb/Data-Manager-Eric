@@ -16,7 +16,14 @@ def generate_votes_from(player_stats_data, player_name):
 
     for voter_name, vote_count in votes_from_data:
         if voter_name != player_name:
-            votes_from_list.content.controls.append(ft.Text(f"{voter_name}: {vote_count}", size=20))
+            votes_from_list.content.controls.append(
+                ft.Row(
+                    controls=[
+                        ft.Text(f"{voter_name}", size=28, weight= ft.FontWeight.W_500),
+                        ft.Text(f": {vote_count}", size=24)
+                    ]
+                )
+            )
 
     votes_from = ft.Container(
         content= votes_from_list,
