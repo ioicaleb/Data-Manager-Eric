@@ -389,10 +389,16 @@ async def loading_gateway(page: ft.Page):
     )
     page.update()
 
+import os
+
+# Calculate the parent directory of your 'src' folder
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 app.mount(
     "/", 
     flet_fastapi.app(
         loading_gateway,
-        web_renderer=ft.WebRenderer.HTML
+        web_renderer=ft.WebRenderer.HTML,
+        assets_dir=os.path.join(ROOT_DIR, "assets") # Maps your icons/loading animations safely
     )
 )
