@@ -241,7 +241,8 @@ async def loading_gateway(page: ft.Page):
     error_text = ft.Text(value="", color="red", size=14, weight=ft.FontWeight.BOLD)
     main_menu_container = ft.Ref[ft.Column]()
 
-    def execute_portal_pipeline(is_admin_mode: bool):
+    # ✅ STEP 1: Converted to "async def" so page.run_task() is happy
+    async def execute_portal_pipeline(is_admin_mode: bool):
         l_id = league_id_field.value.strip()
         pwd = admin_password_field.value.strip()
         cookie = cookie_field.value.strip()
@@ -249,42 +250,42 @@ async def loading_gateway(page: ft.Page):
         
         if not l_id:
             error_text.value = "Error: A valid Music League ID parameter is required."
-            page.update()
+            await page.update_async() # ✅ Added async update
             return
-
+            
         hashed_pwd = hashlib.sha256(pwd.encode()).hexdigest() if pwd else ""
-
+        
         if is_admin_mode and (not pwd or not cookie):
             error_text.value = "Error: Admin Password and Session Cookie are both required to trigger a scrape task."
-            page.update()
+            await page.update_async() # ✅ Added async update
             return
 
         main_menu_container.current.visible = False
-        page.update()
-
+        await page.update_async() # ✅ Added async update
+        
         progress_bar, status_text = show_loading_page(page)
-        page.update()
-
+        await page.update_async() # ✅ Added async update
+        
         try:
             progress_bar.value = 0.1
             status_text.value = "Contacting database storage layers..."
-            page.update()
-
+            await page.update_async() # ✅ Added async update
+            
             clear_search_processor_globals()
             db_cache_payload = get_league_data_from_postgres(l_id)
 
             if is_admin_mode:
                 progress_bar.value = 0.3
                 status_text.value = "Authenticating admin credentials..."
-                page.update()
-
+                await page.update_async() # ✅ Added async update
+                
                 if db_cache_payload and not verify_admin_password_hash(l_id, hashed_pwd):
                     raise ValueError("Admin Authentication Failed: Invalid secret key for this league ID.")
-
+                    
                 progress_bar.value = 0.4
                 status_text.value = "Launching headless container driver... Scraping Music League..."
-                page.update()
-
+                await page.update_async() # ✅ Added async update
+                
                 updated_payload = run_pipeline_migration(l_id, cookie, browser_type, db_cache_payload)
                 save_league_data_to_postgres(l_id, hashed_pwd, updated_payload, cookie, browser_type)
                 db_cache_payload = updated_payload
@@ -294,30 +295,28 @@ async def loading_gateway(page: ft.Page):
 
             progress_bar.value = 0.6
             status_text.value = "Hydrating in-memory state caches..."
-            page.update()
-            
+            await page.update_async() # ✅ Added async update
             initialize_memory_cache(db_cache_payload)
 
             progress_bar.value = 0.8
             status_text.value = "Compiling analytics profiles..."
-            page.update()
-            
+            await page.update_async() # ✅ Added async update
             build_static_dashboard_cache(db_cache_payload)
             init_search_cache()
 
             progress_bar.value = 1.0
             status_text.value = "Done! Loading analytics views..."
-            page.update()
-
+            await page.update_async() # ✅ Added async update
+            
             save_app_data()
-
+            
             page.controls.clear()
             page.horizontal_alignment = ft.CrossAxisAlignment.START
             page.vertical_alignment = ft.MainAxisAlignment.START
             
             main_dashboard(page)
-            page.update()
-
+            await page.update_async() # ✅ Added async update
+            
         except Exception as ex:
             print(f"Gateway pipeline dropped: {ex}")
             page.controls.clear()
@@ -328,67 +327,7 @@ async def loading_gateway(page: ft.Page):
                 ft.Text(f"Pipeline failure occurred:\n{str(ex)}", text_align=ft.TextAlign.CENTER, color=ft.Colors.RED, size=16),
                 ft.ElevatedButton("Return to Portal Gateway", on_click=lambda _: page.go("/"))
             )
-            page.update()
-
-    # Note: Ensure this block below remains aligned within the outer async loading_gateway() definition!
-    page.add(
-        ft.Column(
-            ref=main_menu_container,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=15,
-            controls=[
-                ft.Text("🎵 Eric the Data Manager", size=38, weight=ft.FontWeight.BOLD),
-                ft.Text("Music League Cloud Analytics Portal Engine", size=14, color="grey400"),
-                ft.Container(height=10),
-                
-                league_id_field,
-                error_text,
-                
-                ft.Row([
-                    # Player Card Action
-                    ft.Card(
-                        content=ft.Container(
-                            padding=20, width=280,
-                            content=ft.Column([
-                                ft.Text("League Member Portal", size=16, weight=ft.FontWeight.BOLD),
-                                ft.Text("View live leaderboards, vote matrices, track profiles, and round stats instantly.", size=12, color="grey"),
-                                ft.Container(height=48),
-                                ft.ElevatedButton(
-                                    "View Analytics",
-                                    on_click=lambda e: page.run_task(execute_portal_pipeline, False),
-                                    icon=ft.Icons.VIEW_AGENDA,
-                                    bgcolor="blue700",
-                                    color="white"
-                                )
-                            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-                        )
-                    ),
-                    
-                    # Admin Card Action
-                    ft.Card(
-                        content=ft.Container(
-                            padding=20, width=420,
-                            content=ft.Column([
-                                ft.Text("🛠️ League Setup & Scraping Panel", size=16, weight=ft.FontWeight.BOLD),
-                                ft.Text("Initialize new leagues or fetch fresh results via headless web crawlers.", size=12, color="grey"),
-                                admin_password_field,
-                                cookie_field,
-                                browser_dropdown,
-                                ft.ElevatedButton(
-                                    "Force Crawl / Sync Data",
-                                    on_click=lambda e: page.run_task(execute_portal_pipeline, True),
-                                    icon=ft.Icons.RUN_CIRCLE,
-                                    bgcolor="amber700",
-                                    color="white"
-                                )
-                            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10)
-                        )
-                    )
-                ], alignment=ft.MainAxisAlignment.CENTER, spacing=20)
-            ]
-        )
-    )
-    page.update()
+            await page.update_async() # ✅ Added async update
 
 # ---------------------------------------------------------
 # 5. FLET-FASTAPI APP APPLICATION MOUNT ROUTER
