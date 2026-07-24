@@ -11,11 +11,9 @@ if PROJECT_ROOT not in sys.path:
 if CURRENT_DIR not in sys.path:
     sys.path.insert(0, CURRENT_DIR)
 
-import asyncio
-from fastapi import FastAPI
 import flet as ft
 import hashlib
-import flet.fastapi as flet_fastapi
+import flet_fastapi
 
 # Import your multi-tab visual containers
 from tabs.player_stats import generate_profile_tab
@@ -25,16 +23,15 @@ from tabs.rounds import generate_rounds_tab
 from tabs.song_check import generate_songs_tab
 
 # Import cloud processing modules
-from src.data_processing.cache_manager import initialize_memory_cache, get_master_memory_payload
-from src.data_processing.search_processor import clear_search_processor_globals, init_search_cache
-from src.data_processing.cache_builder import build_static_dashboard_cache
-from src.data_processing.data_processor import save_app_data
-from src.data_collection.data_collector import run_pipeline_migration
+from data_processing.cache_manager import initialize_memory_cache, get_master_memory_payload
+from data_processing.search_processor import clear_search_processor_globals, init_search_cache
+from data_processing.cache_builder import build_static_dashboard_cache
+from data_processing.data_processor import save_app_data
+from data_collection.data_collector import run_pipeline_migration
 
 # ---------------------------------------------------------
 # 1. CLOUD REPLAY & DATABASE LAYER CONFIGURATION
 # ---------------------------------------------------------
-app = FastAPI()
 
 def get_league_data_from_postgres(league_id: str) -> dict:
     """Safely retrieves the raw data dictionary from your Render PostgreSQL instance."""
@@ -42,6 +39,11 @@ def get_league_data_from_postgres(league_id: str) -> dict:
     from psycopg2.extras import RealDictCursor
     DATABASE_URL = os.getenv("DATABASE_URL")
     
+    if not DATABASE_URL:
+        # Prevent runtime connection crash locally if no env variable is assigned
+        print("Warning: DATABASE_URL environment variable is missing.")
+        return {}
+        
     conn = psycopg2.connect(DATABASE_URL, sslmode="require")
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT scraped_data FROM music_leagues WHERE league_id = %s;", (league_id,))
@@ -213,7 +215,7 @@ def show_loading_page(page: ft.Page):
         expand=True
     )
     page.add(loading_layout)
-    return progress_bar, status_text, loading_spinner
+    return progress_bar, status_text
 
 # ---------------------------------------------------------
 # 4. UNIFIED GATEWAY INTERFACE
@@ -243,7 +245,7 @@ async def loading_gateway(page: ft.Page):
     error_text = ft.Text(value="", color="red", size=14, weight=ft.FontWeight.BOLD)
     main_menu_container = ft.Ref[ft.Column]()
 
-    async def execute_portal_pipeline(is_admin_mode: bool):
+    def execute_portal_pipeline(is_admin_mode: bool):
         l_id = league_id_field.value.strip()
         pwd = admin_password_field.value.strip()
         cookie = cookie_field.value.strip()
@@ -264,36 +266,39 @@ async def loading_gateway(page: ft.Page):
         # Hide the control forms and switch over to your loading bar progress state layout
         main_menu_container.current.visible = False
         page.update()
-        progress_bar, status_text, loading_spinner = show_loading_page(page)
+        
+        progress_bar, status_text = show_loading_page(page)
         page.update()
+        
         try:
-            await asyncio.sleep(0.2)
             # Step 1: Clear old search indexes and download row entries from Postgres
             progress_bar.value = 0.1
             status_text.value = "Contacting database storage layers..."
             page.update()
-
-            await asyncio.to_thread(clear_search_processor_globals)
-            db_cache_payload = await asyncio.to_thread(get_league_data_from_postgres, l_id)
+            
+            clear_search_processor_globals()
+            db_cache_payload = get_league_data_from_postgres(l_id)
 
             # Step 2: Handle active Selenium scraping procedures if Admin requested it
-            if is_admin_mode:progress_bar.value = 0.3
-            status_text.value = "Authenticating admin credentials..."
-            page.update()
-
-            # Check for password collisions if this league row already exists
-            if db_cache_payload and not verify_admin_password_hash(l_id, hashed_pwd):
-                raise ValueError("Admin Authentication Failed: Invalid secret key for this league ID.")
-            progress_bar.value = 0.4
-            status_text.value = "Launching headless container driver... Scraping Music League..."
-            page.update()
-
-            # Triggers your refactored data_collector selenium modules directly
-            updated_payload = await asyncio.to_thread(run_pipeline_migration, l_id, cookie, browser_type, db_cache_payload)
-
-            # Commit freshly updated maps back to Postgres instantly
-            await asyncio.to_thread(save_league_data_to_postgres, l_id, hashed_pwd, updated_payload, cookie, browser_type)
-            db_cache_payload = updated_payload
+            if is_admin_mode:
+                progress_bar.value = 0.3
+                status_text.value = "Authenticating admin credentials..."
+                page.update()
+                
+                # Check for password collisions if this league row already exists
+                if db_cache_payload and not verify_admin_password_hash(l_id, hashed_pwd):
+                    raise ValueError("Admin Authentication Failed: Invalid secret key for this league ID.")
+                    
+                progress_bar.value = 0.4
+                status_text.value = "Launching headless container driver... Scraping Music League..."
+                page.update()
+                
+                # Triggers your refactored data_collector selenium modules directly
+                updated_payload = run_pipeline_migration(l_id, cookie, browser_type, db_cache_payload)
+                
+                # Commit freshly updated maps back to Postgres instantly
+                save_league_data_to_postgres(l_id, hashed_pwd, updated_payload, cookie, browser_type)
+                db_cache_payload = updated_payload
 
             # Check if player requested data for a completely empty or missing league ID
             if not db_cache_payload:
@@ -303,30 +308,30 @@ async def loading_gateway(page: ft.Page):
             progress_bar.value = 0.6
             status_text.value = "Hydrating in-memory state caches..."
             page.update()
-            await asyncio.to_thread(initialize_memory_cache, db_cache_payload)
+            initialize_memory_cache(db_cache_payload)
 
             # Step 4: Run pre-computation processing matrix logic steps
             progress_bar.value = 0.8
             status_text.value = "Compiling analytics profiles..."
             page.update()
-            await asyncio.to_thread(build_static_dashboard_cache)
-            await asyncio.to_thread(init_search_cache)
+            build_static_dashboard_cache(db_cache_payload)
+            init_search_cache()
 
             # Step 5: Complete tasks
             progress_bar.value = 1.0
             status_text.value = "Done! Loading analytics views..."
             page.update()
-            await asyncio.sleep(0.3)
-
-            await asyncio.to_thread(save_app_data)
-
+            
+            save_app_data()
+            
             # Clean loading overlay layouts out of the screen canvas view
             page.controls.clear()
             page.horizontal_alignment = ft.CrossAxisAlignment.START
             page.vertical_alignment = ft.MainAxisAlignment.START
-
+            
             main_dashboard(page)
             page.update()
+            
         except Exception as ex:
             # Crash protection: Reset back onto clean error landing views
             print(f"Gateway pipeline dropped: {ex}")
@@ -340,7 +345,7 @@ async def loading_gateway(page: ft.Page):
             )
             page.update()
 
-    # FIXED: Layout design for your entry dashboard cards now renders as the base view
+    # Layout design for your entry dashboard cards
     page.add(
         ft.Column(
             ref=main_menu_container,
@@ -350,7 +355,7 @@ async def loading_gateway(page: ft.Page):
                 ft.Text("🎵 Eric the Data Manager", size=38, weight=ft.FontWeight.BOLD),
                 ft.Text("Music League Cloud Analytics Portal Engine", size=14, color="grey400"),
                 ft.Container(height=10),
-
+                
                 # Shared identity field
                 league_id_field,
                 error_text,
@@ -363,8 +368,7 @@ async def loading_gateway(page: ft.Page):
                             content=ft.Column([
                                 ft.Text("League Member Portal", size=16, weight=ft.FontWeight.BOLD),
                                 ft.Text("View live leaderboards, vote matrices, track profiles, and round stats instantly.", size=12, color="grey"),
-                                ft.Container(height=48),
-                                # Spacer spacing balance
+                                ft.Container(height=48), # Spacer spacing balance
                                 ft.ElevatedButton(
                                     "View Analytics", 
                                     on_click=lambda e: page.run_task(execute_portal_pipeline, False), 
@@ -375,6 +379,7 @@ async def loading_gateway(page: ft.Page):
                             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
                         )
                     ),
+                    
                     # Admin Card Action
                     ft.Card(
                         content=ft.Container(
@@ -401,16 +406,5 @@ async def loading_gateway(page: ft.Page):
     )
     page.update()
 
-import os
 
-# Calculate the parent directory of your 'src' folder
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-app.mount(
-    "/", 
-    flet_fastapi.app(
-        loading_gateway,
-        web_renderer=ft.WebRenderer.HTML,
-        assets_dir=os.path.join(ROOT_DIR, "assets")
-    )
-)
+app = flet_fastapi.app(loading_gateway)
