@@ -40,7 +40,6 @@ def get_league_data_from_postgres(league_id: str) -> dict:
     DATABASE_URL = os.getenv("DATABASE_URL")
     
     if not DATABASE_URL:
-        # Prevent runtime connection crash locally if no env variable is assigned
         print("Warning: DATABASE_URL environment variable is missing.")
         return {}
         
@@ -64,7 +63,6 @@ def save_league_data_to_postgres(league_id: str, secret_pwd_hash: str, payload: 
     conn = psycopg2.connect(DATABASE_URL, sslmode="require")
     cur = conn.cursor()
     
-    # Check existence
     cur.execute("SELECT 1 FROM music_leagues WHERE league_id = %s;", (league_id,))
     exists = cur.fetchone()
     
@@ -124,7 +122,6 @@ def main_dashboard(page: ft.Page, start_tab_index=0):
     def return_callback(page_obj):
         main_dashboard(page_obj, start_tab_index=2)
     
-    # Pull dynamic parameters safely from the newly generated internal structures
     standings_container = generate_standings_tab(page)
     matrix_container = generate_matrix_tab(page)
     profiles_container = generate_profile_tab(page, return_callback)
@@ -227,7 +224,6 @@ async def loading_gateway(page: ft.Page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
 
-    # Interactive Form Properties
     league_id_field = ft.TextField(label="Music League ID / URL Slug", width=380, hint_text="e.g., 4a7b9...")
     admin_password_field = ft.TextField(label="Admin Secret Key (Required for Scraping)", width=380, password=True, can_reveal_password=True)
     cookie_field = ft.TextField(label="Updated Session Cookie (Required for Scraping)", width=380, password=True)
@@ -255,85 +251,74 @@ async def loading_gateway(page: ft.Page):
             error_text.value = "Error: A valid Music League ID parameter is required."
             page.update()
             return
-            
+
         hashed_pwd = hashlib.sha256(pwd.encode()).hexdigest() if pwd else ""
-        
+
         if is_admin_mode and (not pwd or not cookie):
             error_text.value = "Error: Admin Password and Session Cookie are both required to trigger a scrape task."
             page.update()
             return
 
-        # Hide the control forms and switch over to your loading bar progress state layout
         main_menu_container.current.visible = False
         page.update()
-        
+
         progress_bar, status_text = show_loading_page(page)
         page.update()
-        
+
         try:
-            # Step 1: Clear old search indexes and download row entries from Postgres
             progress_bar.value = 0.1
             status_text.value = "Contacting database storage layers..."
             page.update()
-            
+
             clear_search_processor_globals()
             db_cache_payload = get_league_data_from_postgres(l_id)
 
-            # Step 2: Handle active Selenium scraping procedures if Admin requested it
             if is_admin_mode:
                 progress_bar.value = 0.3
                 status_text.value = "Authenticating admin credentials..."
                 page.update()
-                
-                # Check for password collisions if this league row already exists
+
                 if db_cache_payload and not verify_admin_password_hash(l_id, hashed_pwd):
                     raise ValueError("Admin Authentication Failed: Invalid secret key for this league ID.")
-                    
+
                 progress_bar.value = 0.4
                 status_text.value = "Launching headless container driver... Scraping Music League..."
                 page.update()
-                
-                # Triggers your refactored data_collector selenium modules directly
+
                 updated_payload = run_pipeline_migration(l_id, cookie, browser_type, db_cache_payload)
-                
-                # Commit freshly updated maps back to Postgres instantly
                 save_league_data_to_postgres(l_id, hashed_pwd, updated_payload, cookie, browser_type)
                 db_cache_payload = updated_payload
 
-            # Check if player requested data for a completely empty or missing league ID
             if not db_cache_payload:
                 raise ValueError("Specified League ID has no parsed history. An Admin must run a Force Crawl first.")
 
-            # Step 3: Seed our memory maps using cache_manager functions
             progress_bar.value = 0.6
             status_text.value = "Hydrating in-memory state caches..."
             page.update()
+            
             initialize_memory_cache(db_cache_payload)
 
-            # Step 4: Run pre-computation processing matrix logic steps
             progress_bar.value = 0.8
             status_text.value = "Compiling analytics profiles..."
             page.update()
+            
             build_static_dashboard_cache(db_cache_payload)
             init_search_cache()
 
-            # Step 5: Complete tasks
             progress_bar.value = 1.0
             status_text.value = "Done! Loading analytics views..."
             page.update()
-            
+
             save_app_data()
-            
-            # Clean loading overlay layouts out of the screen canvas view
+
             page.controls.clear()
             page.horizontal_alignment = ft.CrossAxisAlignment.START
             page.vertical_alignment = ft.MainAxisAlignment.START
             
             main_dashboard(page)
             page.update()
-            
+
         except Exception as ex:
-            # Crash protection: Reset back onto clean error landing views
             print(f"Gateway pipeline dropped: {ex}")
             page.controls.clear()
             page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
@@ -345,7 +330,7 @@ async def loading_gateway(page: ft.Page):
             )
             page.update()
 
-    # Layout design for your entry dashboard cards
+    # Note: Ensure this block below remains aligned within the outer async loading_gateway() definition!
     page.add(
         ft.Column(
             ref=main_menu_container,
@@ -356,7 +341,6 @@ async def loading_gateway(page: ft.Page):
                 ft.Text("Music League Cloud Analytics Portal Engine", size=14, color="grey400"),
                 ft.Container(height=10),
                 
-                # Shared identity field
                 league_id_field,
                 error_text,
                 
@@ -368,12 +352,12 @@ async def loading_gateway(page: ft.Page):
                             content=ft.Column([
                                 ft.Text("League Member Portal", size=16, weight=ft.FontWeight.BOLD),
                                 ft.Text("View live leaderboards, vote matrices, track profiles, and round stats instantly.", size=12, color="grey"),
-                                ft.Container(height=48), # Spacer spacing balance
+                                ft.Container(height=48),
                                 ft.ElevatedButton(
-                                    "View Analytics", 
-                                    on_click=lambda e: page.run_task(execute_portal_pipeline, False), 
-                                    icon=ft.Icons.VIEW_AGENDA, 
-                                    bgcolor="blue700", 
+                                    "View Analytics",
+                                    on_click=lambda e: page.run_task(execute_portal_pipeline, False),
+                                    icon=ft.Icons.VIEW_AGENDA,
+                                    bgcolor="blue700",
                                     color="white"
                                 )
                             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
@@ -391,10 +375,10 @@ async def loading_gateway(page: ft.Page):
                                 cookie_field,
                                 browser_dropdown,
                                 ft.ElevatedButton(
-                                    "Force Crawl / Sync Data", 
-                                    on_click=lambda e: page.run_task(execute_portal_pipeline, True), 
-                                    icon=ft.Icons.RUN_CIRCLE, 
-                                    bgcolor="amber700", 
+                                    "Force Crawl / Sync Data",
+                                    on_click=lambda e: page.run_task(execute_portal_pipeline, True),
+                                    icon=ft.Icons.RUN_CIRCLE,
+                                    bgcolor="amber700",
                                     color="white"
                                 )
                             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10)
@@ -406,5 +390,7 @@ async def loading_gateway(page: ft.Page):
     )
     page.update()
 
-
+# ---------------------------------------------------------
+# 5. FLET-FASTAPI APP APPLICATION MOUNT ROUTER
+# ---------------------------------------------------------
 app = flet_fastapi.app(loading_gateway)
