@@ -13,7 +13,7 @@ if CURRENT_DIR not in sys.path:
 
 import flet as ft
 import hashlib
-import flet_fastapi
+import flet.fastapi as flet_fastapi
 
 # Import your multi-tab visual containers
 from tabs.player_stats import generate_profile_tab
