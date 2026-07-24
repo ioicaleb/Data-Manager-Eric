@@ -25,8 +25,7 @@ ENV PATH="/usr/bin:/usr/local/bin:${PATH}"
 
 # Copy and install dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir "flet[web]" flet-fastapi uvicorn selenium
+RUN pip install --no-cache-dir --ignore-installed -r requirements.txt
 
 # Copy the entire repository into /app
 COPY . .
