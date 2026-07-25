@@ -429,6 +429,7 @@ async def loading_gateway(page: ft.Page):
     }
     page.theme = ft.Theme(font_family="Oregano")
     page.font_family = "Oregano"
+    page.window.icon = "/app_logo.png"
     page.update()
     page.title = "Eric the Data Manager Portal"
     page.theme_mode = ft.ThemeMode.DARK
@@ -675,9 +676,9 @@ async def loading_gateway(page: ft.Page):
     )
     page.update()
 
-current_script_dir = os.path.dirname(os.path.abspath(__file__))
-absolute_assets_path = os.path.join(current_script_dir, "assets")
-app = flet_fastapi.app(loading_gateway, assets_dir=absolute_assets_path)
+root_project_directory = os.getcwd()
+production_assets_path = os.path.join(root_project_directory, "assets")
+app = flet_fastapi.app(loading_gateway, assets_dir=production_assets_path)
 
 import base64
 import httpx
