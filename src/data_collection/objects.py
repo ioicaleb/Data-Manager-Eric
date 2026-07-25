@@ -53,7 +53,6 @@ class Song:
         self.album = album
         self.player_name = player_name
         self.votes = votes
-        # Avoid mutable default arguments ([]) in Python to prevent cross-instance memory leaks
         self.voters = voters if voters is not None else []
 
 def convert_username_to_name(username, players):
@@ -70,11 +69,9 @@ def convert_username_to_name(username, players):
     if not players:
         return username
 
-    # If the backend feeds a dictionary structure from PostgreSQL:
     if isinstance(players, dict):
         return players.get(username, username)
 
-    # Fallback iteration if players is a list of tuples/lists
     for player in players:
         if isinstance(player, (list, tuple)) and len(player) >= 2:
             if username == player[0]:

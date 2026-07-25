@@ -6,7 +6,6 @@ def generate_matrix_tab(page: ft.Page):
     COLUMN_WIDTH = 80
     DATA_CELL_WIDTH = COLUMN_WIDTH + 20
 
-    # Initialize a clean, empty DataTable instance structure
     matrix_table = ft.DataTable(
         columns=[
             ft.DataColumn(
@@ -29,13 +28,13 @@ def generate_matrix_tab(page: ft.Page):
     vertical_scroll_column = ft.Column(
         expand=True,
         spacing=10,
-        scroll=ft.ScrollMode.ALWAYS, # FIXED: Changed from HIDDEN to ALWAYS so players can scroll down large lists
+        scroll=ft.ScrollMode.HIDDEN,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER 
     )
 
     scrollable_horizontal_track = ft.Row(
         controls=[matrix_table],  
-        scroll=ft.ScrollMode.ALWAYS,
+        scroll=ft.ScrollMode.HIDDEN,
         expand=True,
         alignment=ft.MainAxisAlignment.CENTER 
     )
@@ -56,31 +55,27 @@ def generate_matrix_tab(page: ft.Page):
         Dynamically extracts active data parameters from memory.
         Clears table matrices on-demand, preventing data leak collisions.
         """
-        # 1. Reset columns list to just the empty corner container anchor cell
         matrix_table.columns = [matrix_table.columns[0]]
         matrix_table.rows.clear()
         
         player_keys = []
         players_data = get_players() or []
 
-        # 2. Re-map header column identifiers dynamically
-        if isinstance(players_data, dict):
+        if isinstance(players_data, dict) and player.get("name") != "[Left the league]":
             for name in players_data.keys():
-                # FIXED: Apply matching visibility filters to align columns with data rows exactly
-                if name != "Lindsay" and name != "Magnolia":
-                    player_keys.append(name)
-                    matrix_table.columns.append(
-                        ft.DataColumn(
-                            ft.Container(
-                                width=COLUMN_WIDTH + 10,
-                                alignment=ft.Alignment.CENTER,
-                                content=ft.Text(name, size=18)
-                            )
+                player_keys.append(name)
+                matrix_table.columns.append(
+                    ft.DataColumn(
+                        ft.Container(
+                            width=COLUMN_WIDTH + 10,
+                            alignment=ft.Alignment.CENTER,
+                            content=ft.Text(name, size=18)
                         )
                     )
+                )
         elif isinstance(players_data, list):
             for player in players_data:
-                if isinstance(player, dict):
+                if isinstance(player, dict) and player.get("name") != "[Left the league]":
                     name = player.get("name", "Unknown")
                     player_keys.append(name)
                     matrix_table.columns.append(
@@ -93,7 +88,6 @@ def generate_matrix_tab(page: ft.Page):
                         )
                     )
 
-        # 3. Request and unpack values computed inside data_processor.py
         matrix_data = prepare_master_matrix() or []
         
         if isinstance(matrix_data, list):
@@ -102,49 +96,47 @@ def generate_matrix_tab(page: ft.Page):
                 
                 if isinstance(row_payload, list) and len(row_payload) > 0:
                     row_player_name = str(row_payload[0])
-                    
-                    new_row.cells.append(
-                        ft.DataCell(
-                            ft.Container(
-                                content=ft.Text(row_player_name, size=16, weight=ft.FontWeight.BOLD),
-                                width=DATA_CELL_WIDTH,
-                                height=48,
-                                alignment=ft.Alignment.CENTER
+                    if row_player_name != "[Left the league]":
+                        new_row.cells.append(
+                            ft.DataCell(
+                                ft.Container(
+                                    content=ft.Text(row_player_name, size=16, weight=ft.FontWeight.BOLD),
+                                    width=DATA_CELL_WIDTH,
+                                    height=48,
+                                    alignment=ft.Alignment.CENTER
+                                )
                             )
                         )
-                    )
-                    
-                    for col_index, name in enumerate(player_keys):
-                        payload_score_index = col_index + 1
                         
-                        score = row_payload[payload_score_index] if payload_score_index < len(row_payload) else "-"
-                        
-                        # Render a black cell if the row player matches the column player (no voting for self)
-                        if row_player_name.strip().lower() == str(name).strip().lower():
-                            new_row.cells.append(
-                                ft.DataCell(
-                                    ft.Container(
-                                        width=DATA_CELL_WIDTH,
-                                        height=48,
-                                        bgcolor=ft.Colors.BLACK,
-                                        alignment=ft.Alignment.CENTER
-                                    )
-                                )
-                            )
-                        else:
-                            new_row.cells.append(
-                                ft.DataCell(
-                                    ft.Container(
-                                        content=ft.Text(str(score), size=16, text_align=ft.TextAlign.CENTER),
-                                        width=DATA_CELL_WIDTH,
-                                        height=48,
-                                        alignment=ft.Alignment.CENTER
-                                    )
-                                )
-                            )
+                        for col_index, name in enumerate(player_keys):
+                            payload_score_index = col_index + 1
                             
-                    matrix_table.rows.append(new_row)
+                            score = row_payload[payload_score_index] if payload_score_index < len(row_payload) else "-"
+                            
+                            if row_player_name.strip().lower() == str(name).strip().lower():
+                                new_row.cells.append(
+                                    ft.DataCell(
+                                        ft.Container(
+                                            width=DATA_CELL_WIDTH,
+                                            height=48,
+                                            bgcolor=ft.Colors.BLACK,
+                                            alignment=ft.Alignment.CENTER
+                                        )
+                                    )
+                                )
+                            else:
+                                new_row.cells.append(
+                                    ft.DataCell(
+                                        ft.Container(
+                                            content=ft.Text(str(score), size=16, text_align=ft.TextAlign.CENTER),
+                                            width=DATA_CELL_WIDTH,
+                                            height=48,
+                                            alignment=ft.Alignment.CENTER
+                                        )
+                                    )
+                                )
+                                
+                        matrix_table.rows.append(new_row)
 
-    # Invoke execution setup loops right before display layout building passes
     hydrate_live_matrix_grid()
     return matrix_container

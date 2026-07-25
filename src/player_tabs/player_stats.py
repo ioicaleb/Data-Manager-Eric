@@ -27,7 +27,6 @@ def generate_player_stats(player_stats_data):
             )
             
             if voter.get("comment"):
-                # FIXED: ft.Text does not hold padding properties; wrapped inside a safe ft.Container block
                 voter_info.controls.append(
                     ft.Container(
                         content=ft.Text(
@@ -36,12 +35,11 @@ def generate_player_stats(player_stats_data):
                             italic=True,
                             color=ft.Colors.GREY_500
                         ),
-                        margin=ft.Margin(left=12, right=8)
+                        margin=ft.Margin(12, 0, 8, 0)
                     )
                 )
             voter_list_column.controls.append(voter_info)
 
-        # FIXED: ft.Column cannot hold a margin variable; wrapped everything safely inside an outer ft.Container
         return ft.Container(
             content=ft.Column(
                 controls=[
@@ -50,12 +48,12 @@ def generate_player_stats(player_stats_data):
                     ft.Text(f"Total Votes: {song_data.get('votes', 0)} pts", size=14, weight=ft.FontWeight.W_500),
                     ft.Container(
                         content=voter_list_column,
-                        margin=ft.Margin(left=20, top=5, bottom=10)
+                        margin=ft.Margin(20, 5, 0, 10)
                     )
                 ],
                 spacing=4
             ),
-            margin=ft.Margin(bottom=15)
+            margin=ft.Margin(0, 0, 0, 15)
         )
 
     favorite_player_container = ft.Container(
@@ -103,9 +101,9 @@ def generate_player_stats(player_stats_data):
                     content=ft.Column([
                         ft.Text(f"Artist: {best_song.get('artist', 'Unknown')}", size=15),
                         ft.Text(f"Album: {best_song.get('album', 'Unknown')}", size=15),
-                        ft.Text(f"Round Score Accumulated: {best_song.get('votes', 0)} pts", size=15, weight=ft.FontWeight.BOLD, color="greenAccent200"),
+                        ft.Text(f"Votes: {best_song.get('votes', 0)} pts", size=15, weight=ft.FontWeight.BOLD, color="greenAccent200"),
                     ], spacing=2),
-                    margin=ft.Margin(left=30)
+                    margin=ft.Margin(30, 0, 0, 0)
                 )
             ],
             spacing=5
@@ -132,8 +130,8 @@ def generate_player_stats(player_stats_data):
                     ft.Icon(ft.Icons.ALBUM, color=ft.Colors.AMBER_400),
                     ft.Text(f"Best Round Performance: Round {round_id} — {best_round.get('title', 'Unknown Title')}", size=20, weight=ft.FontWeight.BOLD),
                 ]),
-                ft.Text(f"Total Cumulative Round Score: {round_score} Points", size=16, weight=ft.FontWeight.W_600, color=ft.Colors.BLUE_400),
-                ft.Container(content=best_round_songs_column, margin=ft.Margin(left=20, top=5))
+                ft.Text(f"Score: {round_score} Points", size=16, weight=ft.FontWeight.W_600, color=ft.Colors.BLUE_400),
+                ft.Container(content=best_round_songs_column, margin=ft.Margin(20, 5, 0, 0))
             ],
             spacing=5
         ),
@@ -154,10 +152,10 @@ def generate_player_stats(player_stats_data):
             controls=[
                 ft.Row([
                     ft.Icon(ft.Icons.QUEUE_MUSIC, color=ft.Colors.ORANGE_400),
-                    ft.Text(f"Favorite Artist (Submissions count): {favorite_artist_name}", size=20, weight=ft.FontWeight.BOLD),
+                    ft.Text(f"Favorite Artist: {favorite_artist_name}", size=20, weight=ft.FontWeight.BOLD),
                 ]),
-                ft.Text(f"Appearances Throughout the Season: {favorite_artist_data.get('appearances', 0)} times", size=16, weight=ft.FontWeight.W_600),
-                ft.Container(content=fav_artist_songs_column, margin=ft.Margin(left=20, top=5))
+                ft.Text(f"Appearances: {favorite_artist_data.get('appearances', 0)} times", size=16, weight=ft.FontWeight.W_600),
+                ft.Container(content=fav_artist_songs_column, margin=ft.Margin(20, 5, 0, 0))
             ],
             spacing=5
         ),
@@ -178,9 +176,9 @@ def generate_player_stats(player_stats_data):
             controls=[
                 ft.Row([
                     ft.Icon(ft.Icons.STAR_FILL if hasattr(ft.Icons, "STAR_FILL") else ft.Icons.STAR, color=ft.Colors.YELLOW_400),
-                    ft.Text(f"Highest Scoring Artist: {top_artist_name}", size=20, weight=ft.FontWeight.BOLD),
+                    ft.Text(f"Top Artist: {top_artist_name}", size=20, weight=ft.FontWeight.BOLD),
                 ]),
-                ft.Text(f"Total Cumulative Point Yield: {top_artist_data.get('votes', 0)} pts", size=16, weight=ft.FontWeight.W_600),
+                ft.Text(f"Total Points: {top_artist_data.get('votes', 0)} pts", size=16, weight=ft.FontWeight.W_600),
                 ft.Container(content=top_artist_songs_column, margin=ft.Margin(left=20, top=5))
             ],
             spacing=5
@@ -188,12 +186,11 @@ def generate_player_stats(player_stats_data):
         margin=ft.Margin(bottom=15)
     )
 
-    # FIXED: Swapped scroll to AUTO so lengthy personal rosters scroll nicely
     player_stats_list = ft.ListView(
         expand=True,
         spacing=15,
         padding=ft.Padding(20, 0, 20, 20),
-        scroll=ft.ScrollMode.AUTO,
+        scroll=ft.ScrollMode.HIDDEN,
         controls=[
             ft.Card(content=ft.Container(content=favorite_player_container, padding=12)),
             ft.Card(content=ft.Container(content=top_player_container, padding=12)),

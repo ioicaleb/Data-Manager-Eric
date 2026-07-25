@@ -13,11 +13,11 @@ def generate_top_songs(player_stats_data):
     top_songs_list = ft.Container(
         content=ft.Column(
             controls=[], 
-            scroll=ft.ScrollMode.AUTO,
+            scroll=ft.ScrollMode.HIDDEN,
             spacing=15
         ),
         border_radius=10,
-        alignment=ft.alignment.center_left,
+        alignment=ft.Alignment.CENTER_LEFT,
         expand=True
     )
 

@@ -6,27 +6,23 @@ def generate_standings_tab(page: ft.Page):
     Renders a state-managed, responsive standings view panel.
     Guarantees isolation across multiple parallel database requests.
     """
-    # Create empty, dynamic layout grid containers
-    votes_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.AUTO)
-    wins_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.AUTO)
-    comments_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.AUTO)
+    votes_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN)
+    wins_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN)
+    comments_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN)
     
     def hydrate_live_standings_view():
         """
         Queries your refactored cache_manager proxy on-demand.
         Clears out old rows and appends current database states dynamically.
         """
-        # 1. Trigger live analytical data calculations from memory variables
         votes_data = process_standings_votes() or []
         wins_data = process_standings_wins() or []
         comments_data = process_standings_comments() or []
         
-        # 2. Reset visual column contents to prevent data duplication
         votes_column.controls.clear()
         wins_column.controls.clear()
         comments_column.controls.clear()
         
-        # 3. Append freshly calculated data elements
         for line in votes_data:
             votes_column.controls.append(ft.Text(line, size=32))
 
@@ -36,12 +32,10 @@ def generate_standings_tab(page: ft.Page):
         for line in comments_data:
             comments_column.controls.append(ft.Text(line, size=32))
 
-    # Trigger initial data extraction mapping right before layout mounting occurs
     hydrate_live_standings_view()
 
-    # Re-build your beautiful tab routing matrices
     tab_view = ft.Tabs(
-        length=3,  # FIXED: Swapped length=5 to length=3 to perfectly match your 3 nested tabs
+        length=3,
         expand=True,
         content=ft.Column(
             expand=True,

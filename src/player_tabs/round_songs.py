@@ -12,7 +12,7 @@ def generate_round_songs(player_stats_data):
     round_songs_list = ft.Container(
         content=ft.Column(
             controls=[], 
-            scroll=ft.ScrollMode.AUTO,
+            scroll=ft.ScrollMode.HIDDEN,
             spacing=25
         ),
         border_radius=10,

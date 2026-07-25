@@ -154,19 +154,16 @@ def prepare_master_matrix():
     for player in players_data:
         row = []
         player_name = player.get("name", "Unknown")
+        if player_name and player_name != "[Left the league]":
         
-        # FIXED: Removed the redundant .get(player_name) layer since 
-        # cache_manager un-nests individual player stat files directly!
-        stats_profile = read_json(f"precomputed_stats_{player_name}") or {}
-        votes = stats_profile.get("votes_from_data", {}).copy()
-        
-        votes[player_name] = 0
-        sorted_votes = sorted(votes.items(), key=lambda x: x[0])
-        
-        row.append(player_name)
-        for target_player, vote_count in sorted_votes:
-            # Re-mapped filters according to your matrix layout rules
-            if target_player != "Lindsay" and target_player != "Magnolia":
+            stats_profile = read_json(f"precomputed_stats_{player_name}") or {}
+            votes = stats_profile.get("votes_from_data", {}).copy()
+            
+            votes[player_name] = 0
+            sorted_votes = sorted(votes.items(), key=lambda x: x[0])
+            
+            row.append(player_name)
+            for target_player, vote_count in sorted_votes:
                 row.append(vote_count)
         data.append(row)
 
@@ -187,7 +184,6 @@ def prepare_player_round_info(player):
         }
         for song in songs:
             if song.get("id") in round_obj.get("submissions", []):
-                # FIXED: Corrected reference from round_id["songs"] to round_data[round_id]["songs"]
                 round_data[round_id]["songs"].append(song)
         data.append(round_data)
     return data
@@ -205,7 +201,6 @@ def process_player_stats(player: dict, top_songs_data: list, all_songs_data: lis
     data["votes_from_data"] = votes_data.get("votes_from_data", {})
     data["votes_songs"] = votes_data.get("votes_songs", {})
     
-    # Process votes given tracking counters safely
     votes_to_map = votes_data.get("votes_to_data", {})
     for op, votes in votes_to_map.items():
         if int(votes) > top_votes:
@@ -224,7 +219,6 @@ def process_player_stats(player: dict, top_songs_data: list, all_songs_data: lis
         data["top_player"] = sorted(top_players.keys(), key=lambda x: x)[0]
 
     best_round_score = 0
-    # FIXED: Re-mapped inspection to check both dictionary keys and list objects safely
     if isinstance(round_songs_data, dict):
         iterations = round_songs_data.values()
     else:

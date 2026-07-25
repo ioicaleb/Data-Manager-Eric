@@ -6,7 +6,6 @@ It mimics the signature of legacy file handlers, meaning your data_processor.py
 can continue calling read_json() and write_json() without throwing exceptions or errors.
 """
 
-# The active global state memory map for the currently loading music league
 _global_db_cache = {}
 
 def initialize_memory_cache(database_payload: dict):
@@ -32,13 +31,11 @@ def read_json(filename):
     """
     global _global_db_cache
     
-    # Handle explicit custom precomputed filenames (e.g., precomputed_stats_PlayerName)
     if filename.startswith("precomputed_stats_"):
         player_name = filename.replace("precomputed_stats_", "")
         precomputed_section = _global_db_cache.get("precomputed_stats", {})
         return precomputed_section.get(player_name, None)
         
-    # Standard master data extraction structures fallback check
     if filename in _global_db_cache:
         return _global_db_cache[filename]
         
@@ -51,7 +48,6 @@ def write_json(filename, data):
     """
     global _global_db_cache
     
-    # Handle explicit custom precomputed stats writes per individual player
     if filename.startswith("precomputed_stats_"):
         player_name = filename.replace("precomputed_stats_", "")
         
@@ -61,5 +57,4 @@ def write_json(filename, data):
         _global_db_cache["precomputed_stats"][player_name] = data
         return
 
-    # Update standard collection master layout sets inside memory layers
     _global_db_cache[filename] = data

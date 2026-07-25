@@ -2,16 +2,18 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Eric",
+            "name": "Python: Debug Eric's App (Hot-Reload)",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/main.py",  // Update path if needed
-            "console": "integratedTerminal",
-            "args": [],  // Add arguments if needed
-            "cwd": "${workspaceFolder}",  // Set working directory
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}:${env{PYTHONPATH}}"
-            }
+            "module": "uvicorn",
+            "args": [
+                "src.main:app",
+                "--reload",
+                "--port",
+                "8000"
+            ],
+            "jinja": true,
+            "justMyCode": true
         }
     ]
 }

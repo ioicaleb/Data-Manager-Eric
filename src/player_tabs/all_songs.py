@@ -11,12 +11,12 @@ def generate_all_songs(player_stats_data):
     all_songs_list = ft.Container(
         content=ft.Column(
             controls=[], 
-            scroll=ft.ScrollMode.AUTO,
+            scroll=ft.ScrollMode.HIDDEN,
             spacing=15
         ),
         border_radius=10,
         height=600,
-        alignment=ft.alignment.center_left,
+        alignment=ft.Alignment.CENTER_LEFT,
         expand=True
     )
             

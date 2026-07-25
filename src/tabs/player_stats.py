@@ -1,4 +1,5 @@
 import flet as ft
+import urllib.parse
 from data_processing.data_processor import get_players
 from data_processing.cache_manager import read_json
 
@@ -13,42 +14,56 @@ from player_tabs.votes_songs import generate_votes_songs
 
 def generate_profile_tab(page: ft.Page, return_callback):
     """
-    Renders an interactive player profile selection portal, allowing 
-    deep-dive exploration of sub-tab stats caches inside memory variables.
+    Highly optimized interactive player profile selection portal.
+    Bypasses main-thread I/O bottlenecks to maximize initial tab load speeds.
     """
+    master_profile_wrapper = ft.Container(expand=True)
     profiles_list = ft.ListView(expand=True, spacing=10, padding=10)
+    
     players_data = get_players() or []
 
     def return_to_players(e):
-        page.controls.clear()
-        return_callback(page)
+        profile_details_box.visible = False
+        list_view_box.visible = True
+        page.update()
 
     async def get_player_profile(player: dict):
         page.splash = ft.ProgressBar()
         page.update()
 
         name = player.get("name", "Unknown")
-
-        # FIXED: Removed the redundant .get(name) layer since cache_manager un-nests individual profiles directly!
         player_stats_data = read_json(f"precomputed_stats_{name}") or {}
 
         page.splash = None
-        page.controls.clear()
 
         back_button = ft.Button(
-            content="Back",
+            content="Back to List",
             icon=ft.Icons.ARROW_BACK,
             on_click=return_to_players
         )
         
-        # Pull live external image URL directly from your DB cache payload maps
         local_img_path = player_stats_data.get("avatar_url")
         if local_img_path:
-            avatar = ft.Image(src=local_img_path, width=100, height=100, fit=ft.ImageFit.COVER, border_radius=50)
+            from main import fetch_avatar_base64_raw
+            
+            base64_large_str = fetch_avatar_base64_raw(local_img_path)
+
+            if base64_large_str:
+                large_data_uri = f"data:image/jpeg;base64,{base64_large_str}"
+                
+                avatar = ft.Image(
+                    src=large_data_uri,
+                    width=100, 
+                    height=100, 
+                    fit=ft.BoxFit.COVER, 
+                    border_radius=50,
+                    gapless_playback=True
+                )
+            else:
+                avatar = ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=100, color=ft.Colors.GREY_600)
         else:
             avatar = ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=100, color=ft.Colors.GREY_600)
 
-        # Hydrate internal metrics calculation tab containers
         top_songs = generate_top_songs(player_stats_data)
         all_songs = generate_all_songs(player_stats_data)
         round_songs = generate_round_songs(player_stats_data)
@@ -67,7 +82,6 @@ def generate_profile_tab(page: ft.Page, return_callback):
             f"Songs {name} Voted For": votes_songs
         }
 
-        # FIXED: Ensure only the FIRST sub-tab is displayed initially; hide the rest to prevent stacked alignment overflow
         first_title = list(views_map.keys())[0]
         for t_key, container in views_map.items():
             container.visible = (t_key == first_title)
@@ -78,13 +92,10 @@ def generate_profile_tab(page: ft.Page, return_callback):
             default_color = ft.Colors.WHITE if is_dark_mode else ft.Colors.BLACK
 
             for title, view_container in views_map.items():
-                if title == clicked_title:
-                    view_container.visible = True
-                else:
-                    view_container.visible = False
+                view_container.visible = (title == clicked_title)
             
             try:
-                main_row_split = profile_view.controls[3]
+                main_row_split = profile_view.controls[2]
                 left_menu_container = main_row_split.controls[0]
                 actual_menu_column = left_menu_container.content
 
@@ -93,7 +104,8 @@ def generate_profile_tab(page: ft.Page, return_callback):
                         button.content.color = ft.Colors.PURPLE_500
                     else:
                         button.content.color = default_color
-            except Exception:
+            except Exception as loop_err:
+                print(f"Menu click text tracking realignment failed: {loop_err}")
                 e.control.content.color = ft.Colors.PURPLE_500
             
             page.update()
@@ -110,15 +122,15 @@ def generate_profile_tab(page: ft.Page, return_callback):
             default_color = ft.Colors.WHITE if is_dark_mode else ft.Colors.BLACK
             
             try:
-                main_row_split = profile_view.controls[3]
+                main_row_split = profile_view.controls[2]
                 left_menu_container = main_row_split.controls[0]
                 actual_menu_column = left_menu_container.content
 
                 for button in actual_menu_column.controls:
                     if button.content.color != ft.Colors.PURPLE_500:
                         button.content.color = default_color
-            except Exception:
-                e.control.content.color = ft.Colors.PURPLE_500
+            except Exception as theme_err:
+                print(f"Theme change text tracking realignment failed: {theme_err}")
             page.update()
     
         theme_switch = ft.IconButton(
@@ -130,22 +142,13 @@ def generate_profile_tab(page: ft.Page, return_callback):
         profile_view = ft.Column(
             expand=True,
             controls=[
-                ft.Container(
-                    content=ft.Stack(
-                        controls=[
-                            ft.Container(content=back_button, margin=ft.Margin(0, 10, 0, 20)), 
-                            ft.Row(controls=[ft.Text("Eric the Data Manager", size=42, weight=ft.FontWeight.BOLD)], alignment=ft.MainAxisAlignment.CENTER),
-                            ft.Container(content=theme_switch, right=10, top=0)
-                        ],
-                        height=60,
-                    ),
-                ),
                 ft.Row(
                     controls=[
+                        back_button,
                         avatar,
                         ft.Column([
                             ft.Text(player.get('name', 'Player'), size=32, weight=ft.FontWeight.BOLD),
-                            ft.Text(f"{player.get('position', '#?')} — Accumulation: {player.get('votes_to', 0)} Votes Received", size=20)
+                            ft.Text(f"{player.get('position', '#?')} — {player.get('votes_to', 0)} Votes Received", size=20)
                         ])
                     ],
                     spacing=20
@@ -181,7 +184,7 @@ def generate_profile_tab(page: ft.Page, return_callback):
                             expand=True,
                             content=ft.Column(
                                 expand=True,
-                                controls=list(views_map.values()), # Maps sub-tab layers safely into layout engines
+                                controls=list(views_map.values()),
                             ),
                         )
                     ],
@@ -189,88 +192,105 @@ def generate_profile_tab(page: ft.Page, return_callback):
             ],
         )
         
-        page.add(profile_view)
+        profile_details_box.content = profile_view
+        list_view_box.visible = False
+        profile_details_box.visible = True
         page.update()
 
-    # Factory lambda generation tool to handle loop variable closures correctly
     def create_click_handler(target_player):
         return lambda e: page.run_task(get_player_profile, target_player)
-    
+
+    players_iterable = []
     if isinstance(players_data, dict):
-        for name, player_object in players_data.items():
-            if isinstance(player_object, dict):
-                if "name" not in player_object:
-                    player_object["name"] = name
-                
-                # FIXED: Removed the redundant nested .get(name) lookups
-                player_stats_data = read_json(f"precomputed_stats_{name}") or {}
-                local_img_path = player_stats_data.get("avatar_url")
+        for k, v in players_data.items():
+            if isinstance(v, dict) and k != "[Left the league]":
+                if "name" not in v:
+                    v["name"] = k
+                players_iterable.append(v)
+    elif isinstance(players_data, list):
+        players_iterable = [p for p in players_data if isinstance(p, dict) and p.get("name") != "[Left the league]"]
 
-                if local_img_path:            
-                    avatar_icon = ft.Container(
-                        content=ft.Image(src=local_img_path, fit="cover", border_radius=25, width=80),
-                        width=80, height=80, border_radius=40, border=ft.BorderSide(2, ft.Colors.RED_300)
-                    )
-                else:
-                    avatar_icon = ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=80, color=ft.Colors.RED_500)
-                
-                profiles_list.controls.append(
-                    ft.ListTile(
-                        leading=avatar_icon,
-                        title=ft.Text(str(name), size=22, weight=ft.FontWeight.BOLD),
-                        trailing=ft.Icon(ft.Icons.CHEVRON_RIGHT),
-                        on_click=create_click_handler(player_object)
-                    )
-                )
-            elif isinstance(players_data, list):
-                for player_object in players_data:
-                    if isinstance(player_object, dict):
-                        name = player_object.get("name") or player_object.get("player") or "Unknown"
-                        
-                        # FIXED: Removed the redundant nested .get(name) lookups
-                        player_stats_data = read_json(f"precomputed_stats_{name}") or {}
-                        local_img_path = player_stats_data.get("avatar_url")
+    avatar_controls_registry = {}
 
-                        if local_img_path:            
-                            avatar_icon = ft.Container(
-                                content=ft.Image(src=local_img_path, fit="cover", border_radius=25, width=80),
-                                width=80, 
-                                height=80, 
-                                border_radius=40, 
-                                border=ft.BorderSide(2, ft.Colors.RED_500)
-                            )
-                        else:
-                            avatar_icon = ft.Container(
-                                content=ft.Icon(ft.Icons.PERSON, color=ft.Colors.RED_300, width=80),
-                                width=80, 
-                                height=80, 
-                                border_radius=40, 
-                                border=ft.BorderSide(2, ft.Colors.RED_500)
-                            )
+    for p_obj in players_iterable:
+        p_name = p_obj.get("name") or p_obj.get("player") or "Unknown Player"
+        p_votes = p_obj.get("votes_to", 0)
+        p_rank = p_obj.get("position", "#?")
 
-                        profiles_list.controls.append(
-                            ft.ListTile(
-                                leading=avatar_icon,
-                                title=ft.Text(name, size=22, weight=ft.FontWeight.BOLD),
-                                trailing=ft.Icon(ft.Icons.CHEVRON_RIGHT),
-                                on_click=create_click_handler(player_object)
-                            )
-                        )
+        placeholder_icon = ft.Container(
+            content=ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=40, color=ft.Colors.RED_400),
+            width=50,
+            height=50,
+            alignment=ft.Alignment.CENTER
+        )
+        avatar_controls_registry[p_name] = placeholder_icon
 
-            profiles_container = ft.Container(
-                content=ft.Row(
-                    controls=[
-                        ft.Column(
-                            controls=[profiles_list],
-                            width=500,
-                            expand=False,
-                            scroll=ft.ScrollMode.ALWAYS # FIXED: ScrollMode.ALWAYS ensures lengthy rosters scroll nicely
-                        )
-                    ],
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    expand=True
-                ),
-                expand=True
+        profiles_list.controls.append(
+            ft.ListTile(
+                leading=placeholder_icon,
+                title=ft.Text(f"{p_rank}. {p_name}", size=20, weight=ft.FontWeight.BOLD),
+                subtitle=ft.Text(f"Total Votes Received: {p_votes}"),
+                trailing=ft.Icon(ft.Icons.CHEVRON_RIGHT),
+                on_click=create_click_handler(p_obj)
             )
+        )
 
-    return profiles_container
+    async def hydrate_player_avatars_async():
+        """Fetches and renders avatar image assets natively using local function lookups."""
+        from main import fetch_avatar_base64_raw
+        import asyncio
+        
+        for name, container_control in avatar_controls_registry.items():
+            try:
+                p_stats = read_json(f"precomputed_stats_{name}") or {}
+                img_url = p_stats.get("avatar_url")
+                
+                if img_url:
+                    base64_data_str = fetch_avatar_base64_raw(img_url)
+                    
+                    if base64_data_str:
+                        data_uri_string = f"data:image/jpeg;base64,{base64_data_str}"
+                        
+                        container_control.content = ft.Image(
+                            src=data_uri_string,
+                            fit=ft.BoxFit.COVER,      
+                            width=50,                  
+                            height=50,                 
+                            border_radius=25, 
+                            gapless_playback=True      
+                        )
+                        container_control.update()
+                        
+                await asyncio.sleep(0.01)
+                
+            except Exception as err:
+                print(f"Async image layout skip for {name}: {err}")
+
+
+    page.run_task(hydrate_player_avatars_async)
+
+    list_view_box = ft.Container(
+        content=ft.Row(
+            controls=[
+                ft.Column(
+                    controls=[profiles_list],
+                    width=500,
+                    expand=False,
+                    scroll=ft.ScrollMode.ALWAYS
+                )
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            expand=True
+        ),
+        expand=True,
+        visible=True
+    )
+    
+    profile_details_box = ft.Container(expand=True, visible=False)
+
+    master_profile_wrapper.content = ft.Column(
+        expand=True,
+        controls=[list_view_box, profile_details_box]
+    )
+    
+    return master_profile_wrapper

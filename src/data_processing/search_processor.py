@@ -1,7 +1,6 @@
 from data_processing.cache_manager import read_json
 import re
 
-# Maintain pure structural none states to accurately handle type evaluations
 songs = None
 players = None
 rounds = None
@@ -36,7 +35,6 @@ def get_players():
     if players is None:
         players_list = read_json("players") or []
         
-        # Sort using a safe fallback default if a player entry has empty stats
         sorted_players = sorted(players_list, key=lambda x: x.get("votes_to", 0), reverse=True)
 
         for player in players_list:        
@@ -91,14 +89,15 @@ def find_player_songs_by_round(player_name):
     all_songs = get_songs()
     for round_obj in all_rounds:
         song_data = {
-            "round_id": round_obj.get("round_number"),
+            "round_id": round_obj.get("id"),
             "title": round_obj.get("title"),
             "songs": []
         }
         for song in all_songs:
             if song.get("id") in round_obj.get("submissions", []) and song.get("player_name", "").lower() == player_name.lower():
                 song_data["songs"].append(song.get("id"))    
-        data.append(song_data)
+        if song_data["songs"]:
+            data.append(song_data)
     data = sorted(data, key=lambda x: x.get("round_id", 0))
     return data
 
@@ -120,7 +119,6 @@ def find_top_songs(voter_name):
     for song in matched_songs:
         voters = song.get("voters", [])
         for voter in voters:
-            # Safer getter checks avoiding unexpected type dictionary evaluation crashes
             if voter.get("name", "").lower() == voter_name.lower() and int(voter.get("votes", 0)) == 4:
                 data.append(song.get("id"))
     return data
@@ -140,7 +138,6 @@ def init_search_cache():
     global _search_index
     _search_index = {}
     
-    # Hydrate target context records explicitly 
     all_songs = get_songs()
     
     word_splitter = re.compile(r'[\s\-:,\.\(\)\[\]/\\]+')
@@ -185,15 +182,14 @@ def search_songs(keyword):
         
         if q_word in _search_index:
             current_word_songs = _search_index[q_word]
+        partial_matches = []
+        for idx_key in _search_index.keys():
+            if q_word in idx_key:
+                partial_matches.extend(_search_index[idx_key])
+        if partial_matches:
+            current_word_songs = partial_matches
         else:
-            partial_matches = []
-            for idx_key in _search_index.keys():
-                if q_word in idx_key:
-                    partial_matches.extend(_search_index[idx_key])
-            if partial_matches:
-                current_word_songs = partial_matches
-            else:
-                return []
+            return []
                 
         word_ids_set = set()
         for song in current_word_songs:

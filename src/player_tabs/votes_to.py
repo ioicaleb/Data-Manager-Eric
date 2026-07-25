@@ -8,23 +8,23 @@ def generate_votes_to(player_stats_data):
     """
     votes_to_data = player_stats_data.get("rounds_songs") or {}
 
-    # FIXED: Swapped scroll to AUTO so lengthy match directories scroll cleanly
     votes_to_list = ft.Container(
         content=ft.Column(
             controls=[], 
-            scroll=ft.ScrollMode.AUTO,
+            scroll=ft.ScrollMode.HIDDEN,
         ),
         border_radius=10,
         height=600,
-        alignment=ft.alignment.center_left,
+        alignment=ft.Alignment.CENTER_LEFT,
         expand=True
     )
     
-    # Safely unpack round dictionary keys passed from your memory caches
     if isinstance(votes_to_data, dict):
         iterations = votes_to_data.values()
     else:
         iterations = votes_to_data if votes_to_data else []
+
+    iterations = sorted(iterations, key = lambda x: x['round_id'])
 
     for vote_round_item in iterations:
         if isinstance(vote_round_item, dict) and vote_round_item.get("songs"):
@@ -54,10 +54,9 @@ def generate_votes_to(player_stats_data):
                         ft.Text(f"🎵 {song.get('name', 'Unknown Title')}", size=20, weight=ft.FontWeight.W_500, color="amber100"),
                         ft.Text(f"Artist: {song.get('artist', 'Unknown')}", size=16),
                         ft.Text(f"Album: {song.get('album', 'Unknown')}", size=16),
-                        ft.Text(f"Accumulated Round Score: {song.get('votes', 0)} Points", size=16, weight=ft.FontWeight.BOLD)
+                        ft.Text(f"Score: {song.get('votes', 0)} Points", size=16, weight=ft.FontWeight.BOLD)
                     ],
                     spacing=3,
-                    # FIXED: Changed from legacy mutable tuple assignment to modern safe left padding class
                     margin=ft.Margin(left=40)
                 )
                 
@@ -75,7 +74,6 @@ def generate_votes_to(player_stats_data):
                     v_points = voter.get('votes', 0)
                     s_submitter = song.get('player_name', '')
 
-                    # Build legible presentation formats matching ballot scores
                     display_text = f"{v_name}"
                     if v_name != s_submitter and v_points:
                         display_text += f":  {v_points} pts"
@@ -87,7 +85,6 @@ def generate_votes_to(player_stats_data):
                     )
                     
                     if voter.get("comment"):
-                        # FIXED: ft.Text does not hold padding properties; wrapped inside a safe ft.Container block
                         voter_info.controls.append(
                             ft.Container(
                                 content=ft.Text(

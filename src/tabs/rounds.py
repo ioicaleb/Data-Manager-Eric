@@ -6,17 +6,15 @@ def generate_rounds_tab(page: ft.Page):
     Renders an interactive, searchable sidebar layout displaying round themes, 
     song submissions, tracks metadata, and final point winners.
     """
-    # Create permanent, empty root shell UI elements
     content_stack = ft.Stack(expand=True)
     navigation_menu = ft.Column(
         controls=[],
         alignment=ft.MainAxisAlignment.START,
         spacing=15,
-        scroll=ft.ScrollMode.AUTO, # FIXED: Swapped from HIDDEN to AUTO so long lists scroll cleanly
+        scroll=ft.ScrollMode.HIDDEN,
         expand=True
     )
 
-    # Scoped system operational variables
     views_map = {}
     sort_newest = False
     current_selected_title = [""]
@@ -58,10 +56,17 @@ def generate_rounds_tab(page: ft.Page):
             style=ft.ButtonStyle(padding=0)
         )
 
-    def search_and_sort_rounds(e=None):
+    def search_and_sort_rounds(e=None, initial_load=False):
         """Filters the menu keys based on text search and orders them by round number."""
         keyword = search_input.value.strip().lower() if search_input.value else ""
-        navigation_menu.controls.clear()
+
+        if not initial_load:
+            try:
+                navigation_menu.update()
+                # If your file has other update calls here (like round_display_grid.update()), 
+                # place them inside this block too!
+            except Exception:
+                pass
         
         def extract_round_num(title_str):
             try:
@@ -69,7 +74,6 @@ def generate_rounds_tab(page: ft.Page):
             except (ValueError, IndexError):
                 return 0
 
-        # Sort layout keys according to extracted integers matching round values
         sorted_titles = sorted(
             views_map.keys(), 
             key=extract_round_num, 
@@ -79,7 +83,12 @@ def generate_rounds_tab(page: ft.Page):
         for title in sorted_titles:
             if not keyword or keyword in title.lower():
                 navigation_menu.controls.append(create_menu_button(title))
-        navigation_menu.update()
+        
+        if not initial_load:
+            try:
+                navigation_menu.update()
+            except Exception:
+                pass
 
     def toggle_sort(e):
         """Flips the sort direction state and updates button icon and UI menu."""
@@ -107,17 +116,16 @@ def generate_rounds_tab(page: ft.Page):
         rounds_data = get_rounds() or []
         
         if not rounds_data:
-            # Empty state protection boundary loop
             empty_notice = ft.Container(
                 content=ft.Text("No Completed Rounds Available Yet.", size=20, italic=True, color="grey"),
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment.CENTER,
                 expand=True
             )
             content_stack.controls.append(empty_notice)
             return
 
         for round_item in rounds_data:
-            round_id = round_item.get("round_number", 0)
+            round_id = round_item.get("id", "_")
             round_name = round_item.get("title", f"Round {round_id}")
 
             round_header = ft.Column(
@@ -131,7 +139,7 @@ def generate_rounds_tab(page: ft.Page):
                 content=ft.Column(
                     controls=[], 
                     spacing=10,
-                    scroll=ft.ScrollMode.AUTO # FIXED: Changed from HIDDEN to AUTO so players can scroll songs panel
+                    scroll=ft.ScrollMode.HIDDEN
                 ),
                 expand=True
             )
@@ -184,16 +192,13 @@ def generate_rounds_tab(page: ft.Page):
 
             views_map[f"Round {round_id} - {round_name}"] = round_view
 
-        # Setup standard starting active visibility parameters
         if views_map:
             current_selected_title[0] = list(views_map.keys())[0]
             views_map[current_selected_title[0]].visible = True
             content_stack.controls.extend(list(views_map.values()))
             
-        # Draw navigation buttons initially
-        search_and_sort_rounds(None)
+        search_and_sort_rounds(None, initial_load= True)
 
-    # Core interface form layouts controls declarations
     search_input = ft.TextField(
         label="Search round number or title",
         prefix_icon=ft.Icons.SEARCH,
@@ -230,7 +235,6 @@ def generate_rounds_tab(page: ft.Page):
         expand=True
     )
 
-    # Run data parsing layers before layout assembly mounting triggers
     hydrate_live_rounds_view()
 
     main_view = ft.Row(

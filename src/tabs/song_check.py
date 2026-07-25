@@ -6,16 +6,14 @@ def generate_songs_tab(page: ft.Page):
     Renders an on-demand keyword search dashboard canvas utilizing 
     high-speed dictionary indexes loaded into container memory.
     """
-    # FIXED: Swapped from HIDDEN to AUTO so extensive matching search results scroll nicely
     results_list = ft.Column(
         spacing=15,
         expand=True,
         controls=[],
-        scroll=ft.ScrollMode.AUTO
+        scroll=ft.ScrollMode.HIDDEN
     )
 
     def search_song(e=None):
-        # FIXED: Eliminated the global search_task reference to protect multi-user data isolation
         keyword = search_input.value.strip().lower() if search_input.value else ""
         results_list.controls.clear()
 
@@ -30,7 +28,6 @@ def generate_songs_tab(page: ft.Page):
         titles_list = set()
         unique_results = []
 
-        # Queries our high-speed inverted index from search_processor
         songs_data = search_songs(keyword) or []
         max_results = 100
         songs_data = songs_data[:max_results]
@@ -55,7 +52,6 @@ def generate_songs_tab(page: ft.Page):
             player = song.get("player_name", "Unknown")
             votes = song.get("votes", 0)
             
-            # Fetch the associated round object safely
             round_item = find_round_by_song_id(song.get("id"))
             if round_item:
                 round_id = round_item.get("round_number", "?")
@@ -64,11 +60,9 @@ def generate_songs_tab(page: ft.Page):
                 round_id = "?"
                 round_title = "Unassigned Round"
 
-            # FIXED: Re-mapped the old horizontal row into an elegant, wrapped layout to prevent clipping on mobile/web
             song_card = ft.Container(
                 content=ft.Column(
                     controls=[
-                        # Song Title Header Block
                         ft.Row(
                             controls=[
                                 ft.Icon(ft.Icons.AUDIOTRACK, size=24, color=ft.Colors.BLUE_400),
@@ -77,7 +71,6 @@ def generate_songs_tab(page: ft.Page):
                             spacing=10
                         ),
                         
-                        # Metadata Grid: Wraps items symmetrically across desktop (4 items side-by-side) or mobile (stacked columns)
                         ft.ResponsiveRow(
                             spacing=15,
                             controls=[
@@ -88,7 +81,6 @@ def generate_songs_tab(page: ft.Page):
                             ]
                         ),
                         
-                        # Score Footer Metrics
                         ft.Row(
                             controls=[    
                                 ft.Icon(ft.Icons.THUMB_UP_ALT_ROUNDED, size=20, color="amber"),

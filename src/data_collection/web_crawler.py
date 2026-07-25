@@ -7,16 +7,16 @@ including round information, song submissions, and voting details.
 
 import time
 import re
+import os
+import glob
+import sys
 from bs4 import BeautifulSoup, NavigableString
 from data_collection.objects import Round, Voter, Song, convert_username_to_name
-from data_collection.export_manager import export_rounds
-from data_processing.cache_manager import read_json
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
-# IN-MEMORY APP CACHE FOR RENDER LIFECYCLE
-# Replaces local file persistence with database-synchronized runtime lookups
 _global_avatar_cache = {}
 
 def load_avatar_cache(database_avatars: dict):
@@ -28,29 +28,6 @@ def get_avatar_cache() -> dict:
     """Returns the updated avatar records to be written into the Postgres JSONB schema."""
     global _global_avatar_cache
     return _global_avatar_cache
-
-def get_driver(config):
-    """
-    Launches clean, container-ready headless WebDrivers matching the admin's selection profile.
-    """
-    browser_type = config.get("browser_type", "chromium")
-    print(f"Container launching standard driver format: {browser_type}")
-
-    if browser_type == "firefox":
-        ff_options = FirefoxOptions()
-        ff_options.add_argument("--headless")
-        ff_options.add_argument("--no-sandbox")
-        ff_options.add_argument("--disable-dev-shm-usage")
-        return webdriver.Firefox(options=ff_options)
-    else:
-        # Default deployment: Chromium
-        chrome_options = ChromeOptions()
-        chrome_options.add_argument("--headless=new") 
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.binary_location = "/usr/bin/chromium"
-        return webdriver.Chrome(options=chrome_options)
 
 def get_avatar_url(div, player_name):
     """
@@ -104,7 +81,6 @@ def get_round_results(driver, config):
                 players=players
             )
         
-            # FIXED: Calling get_avatar_url matching its corrected operational state
             get_avatar_url(div, player_name)
             
             artist = song_card.select_one(":nth-child(2)").get_text().strip()
@@ -147,7 +123,6 @@ def get_all_rounds(driver, config):
     Retrieve all completed rounds from the main page.
     """
     rounds = []
-    time.sleep(2)
     
     soup = BeautifulSoup(driver.page_source, "html.parser")
     status_pattern = re.compile(r"status:\s*'COMPLETE'")
@@ -163,7 +138,6 @@ def get_all_rounds(driver, config):
         if len(anchors) >= 3:
             links.append(f"https://app.musicleague.com{anchors[2]}")
     
-    # FIXED: Re-attached the missing round extraction iteration loops
     for link in links:
         driver.get(link)
         time.sleep(1)
@@ -174,26 +148,14 @@ def get_all_rounds(driver, config):
     rounds.sort(key=lambda x: x.round_number)
     return rounds
 
-def check_for_new_rounds(round_number, config, existing_rounds_cache=None):
+def check_for_new_rounds(config, results=None):
     """
     Check for and retrieve new rounds since the last known round in the database.
     """
-    driver = get_driver(config)
-    if not driver:
-        print("Failed to get driver")
-        return existing_rounds_cache if existing_rounds_cache else []
-        
+    round_number = int(results[-1]["id"])
     try:
-        # Inject cookie token to authenticate headless container
-        driver.get("https://app.musicleague.com")
-        driver.add_cookie({
-            "name": "musicleague_user_session",
-            "value": config.get("session_cookie"),
-            "domain": ".musicleague.com",
-            "path": "/"
-        })
-        
-        driver.get(f"https://musicleague.com{config.get('league_id')}")
+        driver = setup_authenticated_driver(config)        
+        driver.get(f"https://app.musicleague.com/l/{config.get('league_id')}")
         rounds_list = driver.current_url
         recent_round = get_recent_round_number(driver)
         missing_rounds = recent_round - round_number
@@ -201,11 +163,11 @@ def check_for_new_rounds(round_number, config, existing_rounds_cache=None):
         if missing_rounds > 0:
             driver.get(rounds_list)
             print(f"Getting information for {missing_rounds} missing rounds")
-            updated_rounds = get_missing_rounds(driver, config, missing_rounds, existing_rounds_cache)
+            updated_rounds = get_missing_rounds(driver, config, missing_rounds, results)
             return updated_rounds
         else:
             print("No new rounds detected.")
-            return existing_rounds_cache
+            return results
     finally:
         driver.quit()
 
@@ -269,24 +231,74 @@ def get_missing_rounds(driver, config, missing_rounds, existing_rounds_cache):
     rounds.sort(key=lambda x: x.round_number)
     return rounds
 
-def get_results(config):
-    """Main function to retrieve all round results during fallback setup initialization."""
-    driver = get_driver(config)
-    if not driver:
-        return []
+def get_firefox_profile_path():
+    home = os.path.expanduser("~")
+
+    if os.name == "nt":
+        base_path = os.path.join(home, "AppData", "Roaming", "Mozilla", "Firefox", "Profiles")
+    elif sys.platform == "darwin":
+        base_path = os.path.join(home, "Library", "Application Support", "Mozilla", "Firefox", "Profiles")
+    else:
+        base_path = os.path.join(home, ".mozilla", "firefox")
+
+    profiles = glob.glob(os.path.join(base_path, "*.default*"))
+    if not profiles:
+        raise FileNotFoundError("No Firefox profile found. Please ensure Firefox is installed.")
+
+    return profiles[0]
+
+def get_chrome_user_data_dir():
+    home = os.path.expanduser("~")
+
+    if os.name == "nt":
+        return os.path.join(home, "AppData", "Local", "Google", "Chrome", "User Data")
+    elif sys.platform == "darwin":
+        return os.path.join(home, "Library", "Application Support", "Google", "Chrome")
+    else:
+        return os.path.join(home, ".config", "google-chrome")
+
+def setup_authenticated_driver(config: dict):
+    """
+    Initializes a headless driver container and injects the dynamic cookie jar
+    across all musicleague subdomains before data collection queries trigger.
+    """
+    browser_type = config.get("browser_type", "chromium")
+    
+    if browser_type == "firefox":
+        try:
+            profile_path = get_firefox_profile_path()
+            safe_profile = FirefoxProfile(profile_path)
+            options = FirefoxOptions()
+            options.add_argument("-headless")
+            options.profile = safe_profile
+        except Exception:
+            options = FirefoxOptions()
+            
+        driver = webdriver.Firefox(options=options)
+    else:
+        user_data_path = get_chrome_user_data_dir()
+        options = ChromeOptions()
         
-    try:
-        driver.get("https://app.musicleague.com")
-        driver.add_cookie({
-            "name": "musicleague_user_session",
-            "value": config.get("session_cookie"),
-            "domain": ".musicleague.com",
-            "path": "/"
-        })
+        options.add_argument(f"--user-data-dir={user_data_path}-selenium-test")
+        options.add_argument("--headless")
+        options.add_argument("--profile-directory=Default")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-gpu")
         
-        driver.get(f"https://musicleague.com{config.get('league_id')}")
-        rounds = get_all_rounds(driver, config)
-        results = export_rounds(rounds, _global_avatar_cache)
-        return results
-    finally:
-        driver.quit()
+        driver = webdriver.Chrome(options=options)
+         
+    time.sleep(1)
+    return driver
+        
+def get_results(config, results = {}):
+    driver = setup_authenticated_driver(config)
+    
+    target_url = f"https://app.musicleague.com/l/{config.get('league_id')}/"
+    driver.get(target_url)
+    time.sleep(1)
+
+    if results:
+        return check_for_new_rounds(driver=driver, config= config, results = results)
+    else:
+        return get_all_rounds(driver= driver, config= config)

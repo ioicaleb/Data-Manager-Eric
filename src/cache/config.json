@@ -1,8 +1,4 @@
 {
-    "executable_path": "/home/caleb/.cargo/bin/geckodriver",
-    "league_url": "https://app.musicleague.com/l/482d97b3b8424b05a54770af5521b06d/",
-    "spreadsheet_id": "13OVqFqcfIqTiVnodnKVOsmagTHxswW25fYKh6mnkqZY",
-    "password": "mjrd jexu lwpi zidt",
     "username-player_name": [
         ["Amanda Gaffney", "Amanda"],
         ["#1 Caleb", "Caleb"],
@@ -17,8 +13,5 @@
         ["arramdraper", "Sarah"],
         ["Nimbus", "Steve"],
         ["Tobi", "Tobi"]
-    ],
-    "ffx_profile_path": "/home/caleb/.mozilla/firefox/",
-    "desktop_profile" : "lgwryf6t.default-release",
-    "laptop_profile" : "zyqb6emb.default-release"
+    ]
 }
