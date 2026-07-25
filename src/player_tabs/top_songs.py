@@ -6,10 +6,10 @@ def generate_top_songs(player_stats_data):
     Renders an in-memory sub-tab collection illustrating the tracks 
     that received the maximum possible vote scores from the selected user.
     """
-    # top_songs drops from memory as a native list of ID strings
+    
     top_songs_data = player_stats_data.get("top_songs") or []
     
-    # FIXED: Swapped scroll configuration to AUTO so extensive tracks ledgers scroll cleanly
+    
     top_songs_list = ft.Container(
         content=ft.Column(
             controls=[], 
@@ -26,7 +26,7 @@ def generate_top_songs(player_stats_data):
         if not song:
             continue
             
-        # FIXED: Upgraded from plain multi-line text strings to structured UI card controls
+        
         song_card = ft.Card(
             content=ft.Container(
                 padding=15,

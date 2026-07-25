@@ -3,7 +3,7 @@ import urllib.parse
 from data_processing.data_processor import get_players
 from data_processing.cache_manager import read_json
 
-# Import your explicit nested stat player layout sub-tabs
+
 from player_tabs.top_songs import generate_top_songs
 from player_tabs.all_songs import generate_all_songs
 from player_tabs.round_songs import generate_round_songs

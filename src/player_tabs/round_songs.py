@@ -8,7 +8,7 @@ def generate_round_songs(player_stats_data):
     """
     round_songs_data = player_stats_data.get("rounds_songs") or {}
 
-    # FIXED: Changed scroll mode from HIDDEN to AUTO so multi-round archives scroll cleanly
+    
     round_songs_list = ft.Container(
         content=ft.Column(
             controls=[], 
@@ -19,7 +19,7 @@ def generate_round_songs(player_stats_data):
         height=600,
     )
 
-    # Handle both list structures and direct dictionary lookups safely from cache layers
+    
     if isinstance(round_songs_data, dict):
         iterations = round_songs_data.values()
     else:
@@ -47,7 +47,7 @@ def generate_round_songs(player_stats_data):
                 if not song:
                     continue
                     
-                # FIXED: Changed legacy tuple assignment to the standardized Flet safe constructor left padding class
+                
                 song_info = ft.Column(
                     controls=[
                         ft.Text(f"🎵 {song.get('name', 'Unknown Track')}", size=20, weight=ft.FontWeight.W_500, color="amber100"),
@@ -58,7 +58,7 @@ def generate_round_songs(player_stats_data):
                     spacing=3,
                     margin=ft.Margin(left=40)
                 )
-                # Wrap each entry inside an elegant visual card layout panel block
+                
                 song_details.content.controls.append(
                     ft.Card(content=ft.Container(content=song_info, padding=12))
                 )

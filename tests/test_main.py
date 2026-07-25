@@ -11,12 +11,12 @@ async def test_increment(flet_app: ftt.FletTestApp):
 
     await tester.pump_and_settle()
 
-    # Initial state
+    
     assert (await tester.find_by_text("0")).count == 1
 
-    # Tap the increment button (found by its key) and let the UI settle
+    
     await tester.tap(await tester.find_by_key("increment"))
     await tester.pump_and_settle()
 
-    # New state
+    
     assert (await tester.find_by_text("1")).count == 1

@@ -7,11 +7,11 @@ def generate_votes_from(player_stats_data, player_name):
     """
     raw_votes_from = player_stats_data.get("votes_from_data") or {}
     
-    # FIXED: Check the incoming type dynamically to prevent AttributeError crashes
+    
     if isinstance(raw_votes_from, dict):
         votes_from_data = sorted(raw_votes_from.items(), key=lambda x: x[1], reverse=True)
     elif isinstance(raw_votes_from, list):
-        # Data is already processed or structured as a list/tuple matrix pairs block
+        
         if len(raw_votes_from) > 0 and isinstance(raw_votes_from[0], (list, tuple)):
             votes_from_data = sorted(raw_votes_from, key=lambda x: x[1], reverse=True)
         else:
@@ -19,7 +19,7 @@ def generate_votes_from(player_stats_data, player_name):
     else:
         votes_from_data = []
 
-    # FIXED: Swapped scroll configuration to AUTO so extensive rival ledgers scroll cleanly
+    
     votes_from_list = ft.Container(
         content=ft.Column(
             controls=[], 

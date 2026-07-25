@@ -6,24 +6,20 @@ import flet as ft
 import hashlib
 import flet.fastapi as flet_fastapi
 
-# Calculate absolute paths to the project root directory
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) # points to /src
-PROJECT_ROOT = os.path.dirname(CURRENT_DIR)               # points to /Data-Manager-Eric
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(CURRENT_DIR)
 
-# Force Python to search the root directory and the src directory for module names
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 if CURRENT_DIR not in sys.path:
     sys.path.insert(0, CURRENT_DIR)
 
-# Import your multi-tab visual containers
 from tabs.player_stats import generate_profile_tab
 from tabs.matrix import generate_matrix_tab
 from tabs.standings import generate_standings_tab
 from tabs.rounds import generate_rounds_tab
 from tabs.song_check import generate_songs_tab
 
-# Import cloud processing modules
 from data_processing.cache_manager import initialize_memory_cache
 from data_processing.search_processor import clear_search_processor_globals, init_search_cache
 from data_processing.cache_builder import build_static_dashboard_cache
@@ -34,11 +30,10 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is missing from your local session.")
 
-# Connect and initialize the schema
 conn = psycopg2.connect(DATABASE_URL, sslmode="require")
 cur = conn.cursor()
 
-# Raw schema design mirroring your jsonb compiled structures
+
 create_table_query = """
 CREATE TABLE IF NOT EXISTS music_leagues (
     league_id VARCHAR(255) PRIMARY KEY,
@@ -57,9 +52,9 @@ cur.close()
 conn.close()
 print("Database schema successfully generated!")
 
-# ---------------------------------------------------------
-# 1. CLOUD REPLAY & DATABASE LAYER CONFIGURATION
-# ---------------------------------------------------------
+
+
+
 
 def get_league_data_from_postgres(league_id: str) -> dict:
     """Safely retrieves the raw data dictionary from your Render PostgreSQL instance."""

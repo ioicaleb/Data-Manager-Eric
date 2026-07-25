@@ -8,7 +8,7 @@ def generate_votes_songs(player_stats_data, player_name):
     """
     vote_songs_data = player_stats_data.get("votes_songs") or []
     
-    # FIXED: Swapped scroll configuration to AUTO so extensive voter ledgers scroll cleanly
+    
     votes_songs_list = ft.Container(
         content=ft.Column(
             controls=[], 
@@ -32,7 +32,7 @@ def generate_votes_songs(player_stats_data, player_name):
         
         for voter in voter_card:
             if voter.get("name", "").lower() == player_name.lower():
-                # FIXED: Changed from legacy mutable tuple assignment to modern safe left padding class
+                
                 song_info = ft.Column(
                     controls=[
                         ft.Text(f"🎵 {song.get('name', 'Unknown Track')}", size=24, weight=ft.FontWeight.W_500, color="purple100"),
@@ -46,7 +46,7 @@ def generate_votes_songs(player_stats_data, player_name):
                 )
                 
                 if voter.get("comment"):
-                    # FIXED: Wrapped text comment within a safe ft.Container block to hold layout spacing
+                    
                     song_info.controls.append(
                         ft.Container(
                             content=ft.Text(
@@ -61,7 +61,7 @@ def generate_votes_songs(player_stats_data, player_name):
                 break
                 
         if song_info:
-            # Wrap each item inside an elegant card to visually distinguish songs
+            
             song_details.content.controls.append(song_info)
             votes_songs_list.content.controls.append(
                 ft.Card(content=ft.Container(content=song_details, padding=15))
