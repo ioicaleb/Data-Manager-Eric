@@ -54,7 +54,7 @@ def generate_songs_tab(page: ft.Page):
             
             round_item = find_round_by_song_id(song.get("id"))
             if round_item:
-                round_id = round_item.get("round_number", "?")
+                round_id = round_item.get("id", "?")
                 round_title = round_item.get("title", "Unknown Round")
             else:
                 round_id = "?"

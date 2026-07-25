@@ -207,7 +207,11 @@ def main_dashboard(page: ft.Page, start_tab_index=0):
                         controls=[
                             ft.Row(
                                 controls=[
-                                    ft.Text("Eric the Data Manager", size=42, weight=ft.FontWeight.BOLD)
+                                    ft.Text(
+                                        "🎵 Eric the Data Manager", 
+                                        size=50, 
+                                        weight=ft.FontWeight.BOLD
+                                    )
                                 ],
                                 alignment=ft.MainAxisAlignment.CENTER,
                             ),
@@ -229,10 +233,10 @@ def show_loading_page(page: ft.Page):
     """Renders a visual pipeline loading bar layout on the screen."""
     page.controls.clear()
     
-    loading_text = ft.Text("Eric is Processing Your League", size=32, weight=ft.FontWeight.BOLD)
+    loading_text = ft.Text("Eric is Processing Your League", size=36, weight=ft.FontWeight.BOLD)
     
     progress_bar = ft.ProgressBar(width=400, color="purple", value=0.0)
-    status_text = ft.Text("Initializing secure runtime containers...", size=18, color="grey400")
+    status_text = ft.Text("Initializing secure runtime containers...", size=24, color="grey400")
     loading_spinner = ft.ProgressRing(width=20, stroke_width=2, color="purple")
     
     loading_layout = ft.Column(
@@ -245,7 +249,7 @@ def show_loading_page(page: ft.Page):
                 spacing=15, 
                 alignment=ft.MainAxisAlignment.CENTER
             ),
-            ft.Text("Please do not close this browser window.", size=12, color="grey600"),
+            ft.Text("Please do not close this browser window.", size=18, color="grey600"),
         ],
         alignment=ft.MainAxisAlignment.CENTER,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -289,7 +293,7 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
             content=ft.Row(
                 controls=[
                     ft.Icon(ft.Icons.PERSON_OUTLINE, color="purple"),
-                    ft.Text(username, size=16, weight=ft.FontWeight.BOLD, width=200),
+                    ft.Text(username, size=20, weight=ft.FontWeight.BOLD, width=200),
                     ft.Icon(ft.Icons.ARROW_FORWARD, color="grey600"),
                     input_field
                 ],
@@ -374,10 +378,10 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
         bgcolor=ft.Colors.SURFACE_CONTAINER,
         content=ft.Column(
             controls=[
-                ft.Text("👤 Username to Display Name", size=26, weight=ft.FontWeight.BOLD),
+                ft.Text("👤 Username to Display Name", size=32, weight=ft.FontWeight.BOLD),
                 ft.Text(
                     "Change the display names of each player.", 
-                    size=14, color="grey400"
+                    size=20, color="grey400"
                 ),
                 ft.Divider(height=20),
                 
@@ -420,13 +424,19 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
 
 async def loading_gateway(page: ft.Page):
     """The central gateway layout that enables players to access stats and admins to run setups."""
+    page.fonts = {
+        "Oregano": "/Oregano-Regular.ttf"
+    }
+    page.theme = ft.Theme(font_family="Oregano")
+    page.font_family = "Oregano"
+    page.update()
     page.title = "Eric the Data Manager Portal"
     page.theme_mode = ft.ThemeMode.DARK
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
 
     league_id_field = ft.TextField(label="Music League ID/URL", width=380, hint_text="e.g., 4a7b9...")
-    admin_password_field = ft.TextField(label="Admin Secret Key (Required for Scraping)", width=380, password=True, can_reveal_password=True)
+    admin_password_field = ft.TextField(label="Admin Password (Required for Scraping)", width=380, password=True, can_reveal_password=True)
     
     browser_dropdown = ft.Dropdown(
         label="Target Headless Webdriver Engine",
@@ -438,7 +448,7 @@ async def loading_gateway(page: ft.Page):
         ]
     )
     
-    error_text = ft.Text(value="", color="red", size=14, weight=ft.FontWeight.BOLD)
+    error_text = ft.Text(value="", color="red", size=20, weight=ft.FontWeight.BOLD)
     main_menu_container = ft.Ref[ft.Column]()
 
     async def execute_portal_pipeline(is_admin_mode: bool):
@@ -576,7 +586,16 @@ async def loading_gateway(page: ft.Page):
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                         spacing=15,
                         controls=[
-                            ft.Text("🎵 Eric the Data Manager", size=38, weight=ft.FontWeight.BOLD),
+                            ft.Text(
+                                "🎵 Eric the Data Manager", 
+                                size=50,
+                                weight=ft.FontWeight.W_700
+                            ),
+                            ft.Text(
+                                "Music League Data Management", 
+                                size=21, 
+                                color="grey400"
+                            ),
                             league_id_field,
                             error_text,
                             ft.ElevatedButton("Return to Main Menu", on_click=lambda _: page.go("/"))
@@ -595,7 +614,7 @@ async def loading_gateway(page: ft.Page):
             page.controls.clear()
             page.add(
                 ft.Icon(ft.Icons.ERROR_OUTLINE, color=ft.Colors.RED, size=50),
-                ft.Text(f"System pipeline failure occurred:\n{str(ex)}", text_align=ft.TextAlign.CENTER, color=ft.Colors.RED, size=16),
+                ft.Text(f"System pipeline failure occurred:\n{str(ex)}", text_align=ft.TextAlign.CENTER, color=ft.Colors.RED, size=20),
                 ft.ElevatedButton("Return to Portal Gateway", on_click=lambda _: page.go("/"))
             )
             page.update()
@@ -606,8 +625,8 @@ async def loading_gateway(page: ft.Page):
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=15,
             controls=[
-                ft.Text("🎵 Eric the Data Manager", size=38, weight=ft.FontWeight.BOLD),
-                ft.Text("Music League Cloud Analytics Portal Engine", size=14, color="grey400"),
+                ft.Text("🎵 Eric the Data Manager", size=44, weight=ft.FontWeight.BOLD),
+                ft.Text("Music League Data Manager", size=20, color="grey400"),
                 ft.Container(height=10),
                 
                 league_id_field,
@@ -618,8 +637,8 @@ async def loading_gateway(page: ft.Page):
                         content=ft.Container(
                             padding=20, width=280,
                             content=ft.Column([
-                                ft.Text("League Member Portal", size=16, weight=ft.FontWeight.BOLD),
-                                ft.Text("View live leaderboards, vote matrices, track profiles, and round stats instantly.", size=12, color="grey"),
+                                ft.Text("League Member Portal", size=20, weight=ft.FontWeight.BOLD),
+                                ft.Text("View live leaderboards, vote matrices, track profiles, and round stats instantly.", size=18, color="grey"),
                                 ft.Container(height=48), 
                                 ft.ElevatedButton(
                                     "View Analytics", 
@@ -636,12 +655,12 @@ async def loading_gateway(page: ft.Page):
                         content=ft.Container(
                             padding=20, width=420,
                             content=ft.Column([
-                                ft.Text("🛠️ League Setup & Scraping Panel", size=16, weight=ft.FontWeight.BOLD),
-                                ft.Text("Initialize new leagues or fetch fresh results via headless web crawlers.", size=12, color="grey"),
+                                ft.Text("🛠️ League Setup & Scraping Panel", size=20, weight=ft.FontWeight.BOLD),
+                                ft.Text("Initialize new leagues or fetch fresh results via headless web crawlers.", size=16, color="grey"),
                                 admin_password_field,
                                 browser_dropdown,
                                 ft.ElevatedButton(
-                                    "Force Crawl / Sync Data", 
+                                    "Sync Data", 
                                     on_click=lambda e: page.run_task(execute_portal_pipeline, True), 
                                     icon=ft.Icons.RUN_CIRCLE, 
                                     bgcolor="amber700", 
@@ -656,8 +675,9 @@ async def loading_gateway(page: ft.Page):
     )
     page.update()
 
-
-app = flet_fastapi.app(loading_gateway)
+current_script_dir = os.path.dirname(os.path.abspath(__file__))
+absolute_assets_path = os.path.join(current_script_dir, "assets")
+app = flet_fastapi.app(loading_gateway, assets_dir=absolute_assets_path)
 
 import base64
 import httpx

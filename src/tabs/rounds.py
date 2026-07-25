@@ -1,6 +1,8 @@
 import flet as ft
 from data_processing.search_processor import get_rounds, find_song_by_id
 
+sort_newest = False
+
 def generate_rounds_tab(page: ft.Page):
     """
     Renders an interactive, searchable sidebar layout displaying round themes, 
@@ -12,11 +14,11 @@ def generate_rounds_tab(page: ft.Page):
         alignment=ft.MainAxisAlignment.START,
         spacing=15,
         scroll=ft.ScrollMode.HIDDEN,
+        width = 360,
         expand=True
     )
 
     views_map = {}
-    sort_newest = False
     current_selected_title = [""]
 
     def handle_menu_click(e):
@@ -60,13 +62,7 @@ def generate_rounds_tab(page: ft.Page):
         """Filters the menu keys based on text search and orders them by round number."""
         keyword = search_input.value.strip().lower() if search_input.value else ""
 
-        if not initial_load:
-            try:
-                navigation_menu.update()
-                # If your file has other update calls here (like round_display_grid.update()), 
-                # place them inside this block too!
-            except Exception:
-                pass
+        navigation_menu.controls.clear()
         
         def extract_round_num(title_str):
             try:
@@ -91,17 +87,20 @@ def generate_rounds_tab(page: ft.Page):
                 pass
 
     def toggle_sort(e):
-        """Flips the sort direction state and updates button icon and UI menu."""
-        nonlocal sort_newest
+        """Swaps sorting order configurations dynamically between oldest and newest round metrics."""
+        global sort_newest
+        
         sort_newest = not sort_newest
+        
         if sort_newest:
-            sort_button.icon = ft.Icons.ARROW_DOWNWARD
-            sort_button.content.value = "Sorted by: Oldest First"
-        else:
-            sort_button.icon = ft.Icons.ARROW_UPWARD
             sort_button.content.value = "Sorted by: Newest First"
+            sort_button.icon = ft.Icons.ARROW_DOWNWARD
+        else:
+            sort_button.content.value = "Sorted by: Oldest First"
+            sort_button.icon = ft.Icons.ARROW_UPWARD
+            
+        search_and_sort_rounds(e=None, initial_load=False)
         sort_button.update()
-        search_and_sort_rounds(None)
 
     def hydrate_live_rounds_view():
         """
@@ -134,14 +133,17 @@ def generate_rounds_tab(page: ft.Page):
                     ft.Text(f"{round_name} - {round_item.get('description', '')}", size=20)
                 ]
             )
-
             song_details = ft.Container(
                 content=ft.Column(
                     controls=[], 
-                    spacing=10,
-                    scroll=ft.ScrollMode.HIDDEN
+                    spacing=15,
+                    scroll=ft.ScrollMode.HIDDEN,
+                    expand=True
                 ),
-                expand=True
+                expand=True,
+                alignment=ft.Alignment.TOP_LEFT,
+                bgcolor=ft.Colors.TRANSPARENT,
+                width=1200 
             )
 
             for submission in round_item.get("submissions", []):
@@ -158,24 +160,8 @@ def generate_rounds_tab(page: ft.Page):
                         spacing=2
                     )
                     song_details.content.controls.append(song_info)
-
-            round_view = ft.Container(
-                content=ft.Column(
-                    controls=[ 
-                        ft.Column(
-                            controls=[round_header, ft.Container(height=2), song_details],
-                            spacing=10,
-                            margin=ft.Margin(10, 0, 0, 0),
-                            expand=True
-                        ),
-                    ],
-                    expand=True
-                ),
-                visible=False, 
-                expand=True
-            )
-            
-            winner_list = round_item.get("winner", [])
+                
+            winner_list = round_item.get("winner", []) or []
             winner_count = len(winner_list)
 
             if winner_count == 0:
@@ -190,6 +176,23 @@ def generate_rounds_tab(page: ft.Page):
             round_header.controls.append(ft.Text(f"{winners}", size=24, color="amber200"))
             round_header.controls.append(ft.Divider(thickness=1, color=ft.Colors.GREY_800))
 
+            round_view = ft.Container(
+                content=ft.Column(
+                    controls=[ 
+                        ft.Column(
+                            controls=[round_header, ft.Container(height=2), song_details],
+                            spacing=10,
+                            margin=ft.Margin(10, 0, 0, 0),
+                            expand=True
+                        ),
+                    ],
+                    expand=True
+                ),
+                visible=False, 
+                expand=True,
+                width=1200
+            )
+
             views_map[f"Round {round_id} - {round_name}"] = round_view
 
         if views_map:
@@ -197,7 +200,7 @@ def generate_rounds_tab(page: ft.Page):
             views_map[current_selected_title[0]].visible = True
             content_stack.controls.extend(list(views_map.values()))
             
-        search_and_sort_rounds(None, initial_load= True)
+        search_and_sort_rounds(None, initial_load=True)
 
     search_input = ft.TextField(
         label="Search round number or title",
@@ -256,4 +259,5 @@ def generate_rounds_tab(page: ft.Page):
         content=main_view,
         expand=True
     )
+    
     return rounds_container
