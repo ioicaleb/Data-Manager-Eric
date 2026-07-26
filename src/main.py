@@ -198,7 +198,7 @@ def main_dashboard(page: ft.Page, start_tab_index=0):
                 ft.Container(
                     margin=ft.Margin(0, 10, 0, 20), 
                     content=ft.Stack(
-                        height=60,
+                        height=70,
                         controls=[
                             ft.Row(
                                 controls=[
@@ -584,7 +584,7 @@ async def loading_gateway(page: ft.Page):
                         controls=[
                             ft.Text(
                                 "🎵 Eric the Data Manager", 
-                                size=50,
+                                size=70,
                                 weight=ft.FontWeight.W_700
                             ),
                             ft.Text(

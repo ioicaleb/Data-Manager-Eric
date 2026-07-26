@@ -17,7 +17,7 @@ def generate_songs_tab(page: ft.Page):
         keyword = search_input.value.strip().lower() if search_input.value else ""
         results_list.controls.clear()
 
-        if not keyword:
+        if not keyword or keyword.__len__() < 3:
             status_text.value = "Enter a song name, artist, or album to search."
             page.update()
             return
