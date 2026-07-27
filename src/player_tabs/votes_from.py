@@ -36,7 +36,6 @@ def generate_votes_from(player_stats_data, player_name):
             votes_from_list.content.controls.append(
                 ft.Card(
                     content=ft.Container(
-                        padding=12,
                         content=ft.Row(
                             controls=[
                                 ft.Row([
@@ -45,9 +44,12 @@ def generate_votes_from(player_stats_data, player_name):
                                 ], spacing=10),
                                 ft.Text(f"{vote_count} pts total", size=22, weight=ft.FontWeight.BOLD, color="amber200")
                             ],
+                            width = 300,
                             alignment=ft.MainAxisAlignment.SPACE_BETWEEN
-                        )
-                    )
+                        ),
+                        padding = 20
+                    ),
+                    margin = ft.Margin(left = 60)
                 )
             )
 

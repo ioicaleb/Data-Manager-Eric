@@ -435,7 +435,7 @@ async def loading_gateway(page: ft.Page):
     admin_password_field = ft.TextField(label="Admin Password (Required for Scraping)", width=380, password=True, can_reveal_password=True)
     
     browser_dropdown = ft.Dropdown(
-        label="Target Headless Webdriver Engine",
+        label="Browser Used for Login",
         value="chromium",
         width=380,
         options=[
@@ -542,12 +542,12 @@ async def loading_gateway(page: ft.Page):
                 show_username_mapping_wizard(page, db_cache_payload, l_id, hashed_pwd)
 
             progress_bar.value = 0.80
-            status_text.value = "Hydrating local analytical memory state caches..."
+            status_text.value = "Initializing data storage..."
             page.update() 
             await asyncio.to_thread(initialize_memory_cache, db_cache_payload)
 
             progress_bar.value = 0.95
-            status_text.value = "Compiling analytics profiles & generating search indexes..."
+            status_text.value = "Compiling profiles & preparing search..."
             page.update() 
             
             await asyncio.to_thread(build_static_dashboard_cache, db_cache_payload)
@@ -651,8 +651,8 @@ async def loading_gateway(page: ft.Page):
                         content=ft.Container(
                             padding=20, width=420,
                             content=ft.Column([
-                                ft.Text("🛠️ League Setup & Scraping Panel", size=20, weight=ft.FontWeight.BOLD),
-                                ft.Text("Initialize new leagues or fetch fresh results via headless web crawlers.", size=16, color="grey"),
+                                ft.Text("🛠️ Admin Panel", size=20, weight=ft.FontWeight.BOLD),
+                                ft.Text("Initialize new leagues or get results of new rounds.", size=16, color="grey"),
                                 admin_password_field,
                                 browser_dropdown,
                                 ft.ElevatedButton(

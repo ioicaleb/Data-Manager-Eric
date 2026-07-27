@@ -119,7 +119,7 @@ def find_top_songs(voter_name):
     for song in matched_songs:
         voters = song.get("voters", [])
         for voter in voters:
-            if voter.get("name", "").lower() == voter_name.lower() and int(voter.get("votes", 0)) == 4:
+            if voter.get("name", "").lower() == voter_name.lower() and (int(voter.get("votes", 0)) == 4 or data.__len__() < 30):
                 data.append(song.get("id"))
     return data
 

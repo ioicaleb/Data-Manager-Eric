@@ -50,17 +50,20 @@ def generate_round_songs(player_stats_data):
                 
                 song_info = ft.Column(
                     controls=[
-                        ft.Text(f"🎵 {song.get('name', 'Unknown Track')}", size=20, weight=ft.FontWeight.W_500, color="amber100"),
-                        ft.Text(f"Artist: {song.get('artist', 'Unknown')}", size=16),
-                        ft.Text(f"Album: {song.get('album', 'Unknown')}", size=16),
-                        ft.Text(f"Round Points Accumulated: {song.get('votes', 0)} pts", size=16, weight=ft.FontWeight.BOLD)
+                        ft.Text(f"🎵 {song.get('name', 'Unknown Track')}", size=24, weight=ft.FontWeight.W_500, color="amber100"),
+                        ft.Text(f"Artist: {song.get('artist', 'Unknown')}", size=18),
+                        ft.Text(f"Album: {song.get('album', 'Unknown')}", size=18),
+                        ft.Text(f"Comment: {song.get('user_comment', '')}", size=18) if song.get('user_comment') else None,
+                        ft.Text(f"Round Points Accumulated: {song.get('votes', 0)} pts", size=18, weight=ft.FontWeight.BOLD)
                     ],
                     spacing=3,
                     margin=ft.Margin(left=40)
                 )
+
+                song_info.controls = [c for c in song_info.controls if c is not None]
                 
                 song_details.content.controls.append(
-                    ft.Card(content=ft.Container(content=song_info, padding=12))
+                    ft.Card(content=ft.Container(content=song_info, padding=12), expand = True)
                 )
             
             round_block.controls.append(song_details)

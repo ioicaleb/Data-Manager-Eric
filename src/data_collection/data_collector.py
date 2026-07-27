@@ -5,7 +5,6 @@ This module serves as the entry point for the web crawler application,
 handling the main workflow of fetching data, processing results,
 and exporting database analytics states.
 """
-import asyncio
 from data_collection.web_crawler import get_results, check_for_new_rounds, load_avatar_cache, get_avatar_cache
 from data_collection.export_manager import export_players, export_songs
 from data_processing.cache_builder import build_static_dashboard_cache
@@ -52,13 +51,10 @@ def run_pipeline_migration(league_id: str, browser_type: str, cached_db_data: di
     
     for r in results:
         if hasattr(r, "__dict__"):
-            r["id"] = r["id"]
             round_dict = r.__dict__
         elif hasattr(r, "dict") and callable(getattr(r, "dict")):
-            r["id"] = r["id"]
             round_dict = r.dict()
         elif isinstance(r, dict):
-            r["id"] = r["id"]
             round_dict = r
         else:
             continue
@@ -80,7 +76,7 @@ def run_pipeline_migration(league_id: str, browser_type: str, cached_db_data: di
                     flattened_submission_ids.append(str(sub))
 
         clean_round_item = {
-            "id": int(round_dict.get("id", 0)),
+            "id": int(round_dict.get("round_number", 0)),
             "title": str(round_dict.get("title", "Unknown Round")),
             "submissions": flattened_submission_ids,
             "description": str(round_dict.get("description", "")),
@@ -122,7 +118,7 @@ def new_round_check(config):
     current_avatars = get_avatar_cache()
 
     if songs and players:
-        updated_results = check_for_new_rounds( config, results=results)
+        updated_results = check_for_new_rounds(config, results=results)
         
         if updated_results != results:
             results = updated_results

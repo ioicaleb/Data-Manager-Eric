@@ -39,11 +39,14 @@ def generate_votes_songs(player_stats_data, player_name):
                         ft.Text(f"Artist: {song.get('artist', 'Unknown')}", size=18),
                         ft.Text(f"Album: {song.get('album', 'Unknown')}", size=18),
                         ft.Text(f"Submitted By: {song.get('player_name', 'Unknown')}", size=18, color="amber200"),
+                        ft.Text(f"Comment: {song.get('user_comment', 'Unknown')}", size=18) if song.get('user_comment') else None,
                         ft.Text(f"Points Awarded by {player_name}: {voter.get('votes', 0)} pts", size=18, weight=ft.FontWeight.BOLD, color="greenAccent200"),
                     ],
                     spacing=3,
                     margin=ft.Margin(left=40)
                 )
+
+                song_info.controls = [c for c in song_info.controls if c is not None]
                 
                 if voter.get("comment"):
                     
@@ -64,7 +67,7 @@ def generate_votes_songs(player_stats_data, player_name):
             
             song_details.content.controls.append(song_info)
             votes_songs_list.content.controls.append(
-                ft.Card(content=ft.Container(content=song_details, padding=15))
+                ft.Card(content=ft.Container(content=song_details, padding=15), expand= True)
             )
             votes_songs_list.content.controls.append(
                 ft.Divider(height=10, thickness=1, color=ft.Colors.GREY_800)

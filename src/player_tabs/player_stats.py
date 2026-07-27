@@ -16,8 +16,7 @@ def generate_player_stats(player_stats_data):
         for voter in song_data.get("voters", []):
             voter_name = voter.get("name", "Anonymous")
             voter_votes = voter.get("votes", 0)
-            player_name_val = song_data.get("player_name", "")
-            
+            player_name_val = song_data.get("player_name", "")           
             show_votes_cond = voter_name != player_name_val and voter_votes
             voter_text_str = f"{voter_name}:  {voter_votes} pts" if show_votes_cond else f"{voter_name}"
             
@@ -40,12 +39,13 @@ def generate_player_stats(player_stats_data):
                 )
             voter_list_column.controls.append(voter_info)
 
-        return ft.Container(
+        voter_container =  ft.Container(
             content=ft.Column(
                 controls=[
-                    ft.Text(f"🎵 {song_data.get('name', 'Unknown Track')}", size=18, weight=ft.FontWeight.W_600, color="purple100"),
-                    ft.Text(f"Artist: {song_data.get('artist', 'Unknown')}   |   Album: {song_data.get('album', 'Unknown')}", size=14, color=ft.Colors.GREY_400),
-                    ft.Text(f"Total Votes: {song_data.get('votes', 0)} pts", size=14, weight=ft.FontWeight.W_500),
+                    ft.Text(f"🎵 {song_data.get('name', 'Unknown Track')}", size=24, weight=ft.FontWeight.W_600, color="purple100"),
+                    ft.Text(f"Artist: {song_data.get('artist', 'Unknown')}   |   Album: {song_data.get('album', 'Unknown')}", size=18, color=ft.Colors.GREY_400),
+                    ft.Text(f"Comment: {song_data.get('user_comment', 'Unknown')}", size=18) if song_data.get('user_comment') else None, 
+                    ft.Text(f"Total Votes: {song_data.get('votes', 0)} pts", size=18, weight=ft.FontWeight.W_500),
                     ft.Container(
                         content=voter_list_column,
                         margin=ft.Margin(20, 5, 0, 10)
@@ -55,6 +55,10 @@ def generate_player_stats(player_stats_data):
             ),
             margin=ft.Margin(0, 0, 0, 15)
         )
+
+        voter_container.content.controls = [c for c in voter_container.content.controls if c is not None]
+
+        return voter_container
 
     favorite_player_container = ft.Container(
         content=ft.Row([
@@ -95,13 +99,14 @@ def generate_player_stats(player_stats_data):
         best_song_view = ft.Column(
             controls=[
                 ft.Row([
-                    ft.Text(f"🏆 Best Song: {best_song.get('name', 'Unknown')}", size=20, weight=ft.FontWeight.BOLD, color="amber200"),
+                    ft.Text(f"🏆 Best Song: {best_song.get('name', 'Unknown')}", size=24, weight=ft.FontWeight.BOLD, color="amber200"),
                 ]),
                 ft.Container(
-                    content=ft.Column([
-                        ft.Text(f"Artist: {best_song.get('artist', 'Unknown')}", size=15),
-                        ft.Text(f"Album: {best_song.get('album', 'Unknown')}", size=15),
-                        ft.Text(f"Votes: {best_song.get('votes', 0)} pts", size=15, weight=ft.FontWeight.BOLD, color="greenAccent200"),
+                    content=ft.Column( controls = [
+                        ft.Text(f"Artist: {best_song.get('artist', 'Unknown')}", size=18),
+                        ft.Text(f"Album: {best_song.get('album', 'Unknown')}", size=18),
+                        ft.Text(f"Comment: {best_song.get('user_comment', '')}", size=18) if best_song.get('user_comment') else None,
+                        ft.Text(f"Votes: {best_song.get('votes', 0)} pts", size=18, weight=ft.FontWeight.BOLD, color="greenAccent200"),
                     ], spacing=2),
                     margin=ft.Margin(30, 0, 0, 0)
                 )
@@ -109,8 +114,9 @@ def generate_player_stats(player_stats_data):
             spacing=5
         )
     else:
-        best_song_view = ft.Text("Best Song Data Node Pending Scrape Analysis.", italic=True, size=15, color="grey")
+        best_song_view = ft.Text("No songs found.", italic=True, size=18, color="grey")
 
+    best_song_view.controls[1].content.controls = [c for c in best_song_view.controls[1].content.controls if c is not None]
     best_song_container = ft.Container(content=best_song_view, margin=ft.Margin(bottom=15))
 
     best_round = player_stats_data.get("best_round", {})

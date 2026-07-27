@@ -47,11 +47,12 @@ class Song:
     """
     Represents a song submitted to a round.
     """
-    def __init__(self, name, votes=0, player_name=None, artist=None, album=None, voters=None):
+    def __init__(self, name, votes=0, player_name=None, artist=None, album=None, user_comment = None, voters=None):
         self.name = name
         self.artist = artist
         self.album = album
         self.player_name = player_name
+        self.user_comment = user_comment
         self.votes = votes
         self.voters = voters if voters is not None else []
 

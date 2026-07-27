@@ -76,6 +76,7 @@ def get_round_results(driver, config):
             song_name = song_card.find().get_text().strip()
             
             username_div = div.select_one("div[class*='rank-'] > :first-child > :first-child > :last-child > h6")
+            user_comment = div.select_one("div:nth-child(2) > p > span").get_text().strip()
             player_name = convert_username_to_name(
                 username=username_div.get_text().strip(),
                 players=players
@@ -110,6 +111,7 @@ def get_round_results(driver, config):
                 player_name=player_name,
                 artist=artist,
                 album=album,
+                user_comment = user_comment,
                 voters=voters
             ))
             
@@ -137,15 +139,19 @@ def get_all_rounds(driver, config):
         anchors = [anchor.get('href') for anchor in elem.find_all("a", href=True)]
         if len(anchors) >= 3:
             links.append(f"https://app.musicleague.com{anchors[2]}")
-    
+    print("Round links found")
+    i = 1
     for link in links:
+        print(f"Round {i} of {links.__len__()}")
         driver.get(link)
         time.sleep(1)
         round_data = get_round_results(driver, config)
         if round_data:
             rounds.append(round_data)
+        i += 1
             
     rounds.sort(key=lambda x: x.round_number)
+    print("Got all rounds")
     return rounds
 
 def check_for_new_rounds(config, results=None):
@@ -297,7 +303,7 @@ def get_results(config, results = {}):
     target_url = f"https://app.musicleague.com/l/{config.get('league_id')}/"
     driver.get(target_url)
     time.sleep(1)
-
+    print("Driver ready")
     if results:
         return check_for_new_rounds(driver=driver, config= config, results = results)
     else:

@@ -41,7 +41,7 @@ def generate_votes_to(player_stats_data):
                 expand=True
             )
             song_details = ft.Container(
-                content=ft.Column(controls=[], spacing=10)
+                content=ft.Column(controls=[], spacing=10, expand = True)
             )
 
             for song_id in vote_round_item["songs"]:
@@ -51,14 +51,16 @@ def generate_votes_to(player_stats_data):
 
                 song_info = ft.Column(
                     controls=[
-                        ft.Text(f"🎵 {song.get('name', 'Unknown Title')}", size=20, weight=ft.FontWeight.W_500, color="amber100"),
-                        ft.Text(f"Artist: {song.get('artist', 'Unknown')}", size=16),
-                        ft.Text(f"Album: {song.get('album', 'Unknown')}", size=16),
-                        ft.Text(f"Score: {song.get('votes', 0)} Points", size=16, weight=ft.FontWeight.BOLD)
+                        ft.Text(f"🎵 {song.get('name', 'Unknown Title')}", size=24, weight=ft.FontWeight.W_500, color="amber100"),
+                        ft.Text(f"Artist: {song.get('artist', 'Unknown')}", size=18),
+                        ft.Text(f"Album: {song.get('album', 'Unknown')}", size=18),
+                        ft.Text(f"Comment: {song.get('user_comment')}", size=18) if song.get('user_comment', '').strip() else None,
+                        ft.Text(f"Score: {song.get('votes', 0)} Points", size=18, weight=ft.FontWeight.BOLD)
                     ],
                     spacing=3,
                     margin=ft.Margin(left=40)
                 )
+                song_info.controls = [c for c in song_info.controls if c is not None]
                 
                 voter_list = ft.Container(
                     content=ft.Column(
