@@ -177,8 +177,11 @@ def check_for_new_rounds( config, results=None, driver = None):
         else:
             print("No new rounds detected.")
             return results
-    finally:
-        driver.quit()
+    except Exception as e:
+            import traceback
+            print(f"Critical execution error in check_for_new_round block: {e}")
+            traceback.print_exc()
+            return results
 
 def get_recent_round_number(driver):
     """
@@ -319,11 +322,13 @@ def get_results(config, results = None):
         driver.get(target_url)
         time.sleep(1)
         if results:
-            return check_for_new_rounds(driver, config, results=results)
+            return check_for_new_rounds(driver = driver, config = config, results=results)
         else:
             return get_all_rounds(driver, config)     
     except Exception as e:
+        import traceback
         print(f"Critical execution error in get_results block: {e}")
+        traceback.print_exc()
         return results
         
     finally:
