@@ -279,7 +279,6 @@ def setup_authenticated_driver(config: dict):
     across all musicleague subdomains before data collection queries trigger.
     """
     browser_type = config.get("browser_type", "chromium")
-    driver = webdriver()
     if browser_type == "firefox":
         try:
             profile_path = get_firefox_profile_path()
@@ -311,12 +310,32 @@ def setup_authenticated_driver(config: dict):
     time.sleep(1)
     return driver
         
-def get_results(config, results = {}):
-    driver = setup_authenticated_driver(config)
-    target_url = f"https://app.musicleague.com/l/{config.get('league_id')}/"
-    driver.get(target_url)
-    time.sleep(1)
-    if results:
-        return check_for_new_rounds(driver=driver, config= config, results = results)
-    else:
-        return get_all_rounds(driver= driver, config= config)
+def get_results(config, results = None):
+    if results is None:
+        results = []
+    driver = None
+    try:
+        driver = setup_authenticated_driver(config)
+        if not driver:
+                print("Aborting collection pipeline run: Driver failed authentication allocation.")
+                return results
+        target_url = f"https://app.musicleague.com/l/{config.get('league_id')}/"
+        driver.get(target_url)
+        time.sleep(1)
+        if results:
+                print("Historical context present. Evaluating for partial delta sync updates...")
+                return check_for_new_rounds(driver, config, results=results)
+        else:
+            print("No cached data discovered. Initiating comprehensive global full data scrape...")
+            return get_all_rounds(driver, config)     
+    except Exception as e:
+        print(f"Critical execution error encountered inside top-level get_results block: {e}")
+        return results
+        
+    finally:
+        if driver is not None:
+            print("Terminating active automation browser window workers...")
+            try:
+                driver.quit()
+            except Exception as e:
+                print(f"Error closing webdriver: {e}")
