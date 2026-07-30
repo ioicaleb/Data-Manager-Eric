@@ -50,7 +50,8 @@ def get_round_results(driver, config):
     Extract round information from a single round page.
     """
     players = config.get("username-player_name")
-    
+    if driver is None:
+        print("get_round_results")
     try:
         soup = BeautifulSoup(driver.page_source, "html.parser")
         for element in soup.find_all(string=True):
@@ -125,6 +126,8 @@ def get_all_rounds(driver, config):
     Retrieve all completed rounds from the main page.
     """
     rounds = []
+    if driver is None:
+            print("get_all_rounds")
     
     soup = BeautifulSoup(driver.page_source, "html.parser")
     status_pattern = re.compile(r"status:\s*'COMPLETE'")
@@ -170,6 +173,8 @@ def check_for_new_rounds(config, results=None):
         missing_rounds = recent_round - round_number
         
         if missing_rounds > 0:
+            if driver is None:
+                    print("check_for_new_rounds")
             driver.get(rounds_list)
             print(f"Getting information for {missing_rounds} missing rounds")
             updated_rounds = get_missing_rounds(driver, config, missing_rounds, results)
@@ -178,6 +183,8 @@ def check_for_new_rounds(config, results=None):
             print("No new rounds detected.")
             return results
     finally:
+        if driver is None:
+                print("finally")
         driver.quit()
 
 def get_recent_round_number(driver):
@@ -217,6 +224,9 @@ def get_missing_rounds(driver, config, missing_rounds, existing_rounds_cache):
     if rounds[0].get("round_number") == 0:
         rounds = []
     time.sleep(5)
+
+    if driver is None:
+            print("get_missing_round")
     
     soup = BeautifulSoup(driver.page_source, "html.parser")
     status_pattern = re.compile(r"status:\s*'COMPLETE'")
@@ -273,7 +283,6 @@ def setup_authenticated_driver(config: dict):
     across all musicleague subdomains before data collection queries trigger.
     """
     browser_type = config.get("browser_type", "chromium")
-    driver = None
     if browser_type == "firefox":
         try:
             profile_path = get_firefox_profile_path()
@@ -297,7 +306,10 @@ def setup_authenticated_driver(config: dict):
         options.add_argument("--disable-gpu")
         
         driver = webdriver.Chrome(options=options)
-         
+
+    if driver is None:
+            print("setup_authenticated_driver")
+    
     time.sleep(1)
     return driver
         
@@ -307,7 +319,8 @@ def get_results(config, results = {}):
     target_url = f"https://app.musicleague.com/l/{config.get('league_id')}/"
     driver.get(target_url)
     time.sleep(1)
-    print("Driver ready")
+    if driver is None:
+                print("get_results")
     if results:
         return check_for_new_rounds(driver=driver, config= config, results = results)
     else:
