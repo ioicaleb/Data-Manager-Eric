@@ -279,6 +279,7 @@ def setup_authenticated_driver(config: dict):
     if browser_type == "firefox":
         options = FirefoxOptions()
         options.add_argument("-headless")
+        options.set_preference("security.sandbox.content.level", 0)
 
         try:
             profile_path = get_firefox_profile_path()
