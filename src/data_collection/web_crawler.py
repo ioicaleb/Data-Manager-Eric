@@ -178,7 +178,6 @@ def check_for_new_rounds(config, results=None):
             print("No new rounds detected.")
             return results
     finally:
-
         driver.quit()
 
 def get_recent_round_number(driver):
@@ -215,6 +214,8 @@ def get_missing_rounds(driver, config, missing_rounds, existing_rounds_cache):
     Get specific missing rounds using state arrays injected from Postgres.
     """
     rounds = existing_rounds_cache if existing_rounds_cache else []
+    if rounds[0].get("id") == 0:
+        rounds = []
     time.sleep(5)
     
     soup = BeautifulSoup(driver.page_source, "html.parser")
@@ -237,11 +238,7 @@ def get_missing_rounds(driver, config, missing_rounds, existing_rounds_cache):
         round_data = get_round_results(driver, config)
         if round_data:
             rounds.append(round_data)
-
-    if isinstance(rounds, dict):
-        rounds.sort(key=lambda x: x["round_number"])
-    else:
-        rounds.sort(key=lambda x: x.round_number)
+            print(f"Got round {links.__len__() - round_data.round_number + 1} out of {links.__len__()}")
     return rounds
 
 def get_firefox_profile_path():

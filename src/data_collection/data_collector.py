@@ -76,7 +76,7 @@ def run_pipeline_migration(league_id: str, browser_type: str, cached_db_data: di
                     flattened_submission_ids.append(str(sub))
 
         clean_round_item = {
-            "id": int(round_dict.get("round_number", 0)),
+            "round_number": int(round_dict.get("round_number")),
             "title": str(round_dict.get("title", "Unknown Round")),
             "submissions": flattened_submission_ids,
             "description": str(round_dict.get("description", "")),
@@ -84,7 +84,7 @@ def run_pipeline_migration(league_id: str, browser_type: str, cached_db_data: di
         }
         sanitized_rounds.append(clean_round_item)
 
-    results = sanitized_rounds
+    results = sorted(sanitized_rounds, key= lambda x: x.get("round_number"))
 
     players = sorted(players, key=lambda x: x.get("name", "").lower())
     songs = sorted(songs, key=lambda x: x.get("artist", "").lower())

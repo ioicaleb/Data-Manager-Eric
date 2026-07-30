@@ -124,7 +124,7 @@ def generate_rounds_tab(page: ft.Page):
             return
 
         for round_item in rounds_data:
-            round_number = round_item.get("id", "_")
+            round_number = round_item.get("round_number", "_")
             round_name = round_item.get("title", f"Round {round_number}")
 
             round_header = ft.Column(

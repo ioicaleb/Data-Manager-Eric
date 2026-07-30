@@ -89,7 +89,7 @@ def find_player_songs_by_round(player_name):
     all_songs = get_songs()
     for round_obj in all_rounds:
         song_data = {
-            "round_number": round_obj.get("id"),
+            "round_number": round_obj.get("round_number"),
             "title": round_obj.get("title"),
             "songs": []
         }
