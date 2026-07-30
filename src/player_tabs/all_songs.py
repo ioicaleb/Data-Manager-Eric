@@ -15,6 +15,7 @@ def generate_all_songs(player_stats_data):
             spacing=15
         ),
         border_radius=10,
+        height=600,
         alignment=ft.Alignment.CENTER_LEFT,
         expand=True
     )

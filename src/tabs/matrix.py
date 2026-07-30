@@ -64,7 +64,7 @@ def generate_matrix_tab(page: ft.Page):
 
         if isinstance(players_data, dict):
             for name in players_data.keys():
-                if name == "[Left the league]" or name == "":
+                if name == "[Left the league]":
                     continue
                 player_keys.append(name)
                 matrix_table.columns.append(
@@ -78,7 +78,7 @@ def generate_matrix_tab(page: ft.Page):
                 )
         elif isinstance(players_data, list):
             for player in players_data:
-                if isinstance(player, dict) and player.get("name") and player.get("name") != "[Left the league]":
+                if isinstance(player, dict) and player.get("name") != "[Left the league]":
                     name = player.get("name", "Unknown")
                     player_keys.append(name)
                     matrix_table.columns.append(
@@ -92,54 +92,56 @@ def generate_matrix_tab(page: ft.Page):
                     )
 
         matrix_data = prepare_master_matrix() or []
-        
-        if isinstance(matrix_data, list):
-            for row_payload in matrix_data:                
-                new_row = ft.DataRow(cells=[])
-                
-                if isinstance(row_payload, list) and len(row_payload) > 0:
-                    row_player_name = str(row_payload[0])
-                    if row_player_name != "[Left the league]":
-                        new_row.cells.append(
-                            ft.DataCell(
-                                ft.Container(
-                                    content=ft.Text(row_player_name, size=13 if is_mobile else 16, weight=ft.FontWeight.BOLD),
-                                    width=DATA_CELL_WIDTH,
-                                    height=48,
-                                    alignment=ft.Alignment.CENTER
-                                )
+
+        for row_payload in matrix_data:
+            if not isinstance(row_payload, dict):
+                continue
+
+            row_player_name = str(row_payload.get("player", ""))
+            row_votes = row_payload.get("votes", {}) or {}
+            if not row_player_name or row_player_name == "[Left the league]":
+                continue
+
+            new_row = ft.DataRow(cells=[])
+            new_row.cells.append(
+                ft.DataCell(
+                    ft.Container(
+                        content=ft.Text(row_player_name, size=13 if is_mobile else 16, weight=ft.FontWeight.BOLD),
+                        width=DATA_CELL_WIDTH,
+                        height=48,
+                        alignment=ft.Alignment.CENTER
+                    )
+                )
+            )
+
+            votes_lookup = {str(k).strip().lower(): v for k, v in row_votes.items()}
+
+            for name in player_keys:
+                if row_player_name.strip().lower() == str(name).strip().lower():
+                    new_row.cells.append(
+                        ft.DataCell(
+                            ft.Container(
+                                width=DATA_CELL_WIDTH,
+                                height=48,
+                                bgcolor=ft.Colors.BLACK,
+                                alignment=ft.Alignment.CENTER
                             )
                         )
-                        
-                        for col_index, name in enumerate(player_keys):
-                            payload_score_index = col_index + 1
-                            
-                            score = row_payload[payload_score_index] if payload_score_index < len(row_payload) else "-"
-                            
-                            if row_player_name.strip().lower() == str(name).strip().lower():
-                                new_row.cells.append(
-                                    ft.DataCell(
-                                        ft.Container(
-                                            width=DATA_CELL_WIDTH,
-                                            height=48,
-                                            bgcolor=ft.Colors.BLACK,
-                                            alignment=ft.Alignment.CENTER
-                                        )
-                                    )
-                                )
-                            else:
-                                new_row.cells.append(
-                                    ft.DataCell(
-                                        ft.Container(
-                                            content=ft.Text(str(score), size=13 if is_mobile else 16, text_align=ft.TextAlign.CENTER),
-                                            width=DATA_CELL_WIDTH,
-                                            height=48,
-                                            alignment=ft.Alignment.CENTER
-                                        )
-                                    )
-                                )
-                                
-                        matrix_table.rows.append(new_row)
+                    )
+                else:
+                    score = votes_lookup.get(str(name).strip().lower(), "-")
+                    new_row.cells.append(
+                        ft.DataCell(
+                            ft.Container(
+                                content=ft.Text(str(score), size=13 if is_mobile else 16, text_align=ft.TextAlign.CENTER),
+                                width=DATA_CELL_WIDTH,
+                                height=48,
+                                alignment=ft.Alignment.CENTER
+                            )
+                        )
+                    )
+
+            matrix_table.rows.append(new_row)
 
     hydrate_live_matrix_grid()
     return matrix_container

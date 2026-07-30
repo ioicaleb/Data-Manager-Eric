@@ -16,7 +16,7 @@ def generate_round_songs(player_stats_data):
             spacing=25
         ),
         border_radius=10,
-        expand=True,
+        height=600,
     )
 
     

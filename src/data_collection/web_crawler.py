@@ -79,7 +79,7 @@ def get_round_results(driver, config):
             user_comment = div.select_one("div:nth-child(2) > p > span").get_text().strip()
             player_name = convert_username_to_name(
                 username=username_div.get_text().strip(),
-                players=players
+                username_map = config.get("username-player_name")
             )
         
             get_avatar_url(div, player_name)
@@ -93,7 +93,7 @@ def get_round_results(driver, config):
             for voter_info in voters_card:
                 voter_name = convert_username_to_name(
                     username=voter_info.select_one(":nth-child(2) > b").get_text(),
-                    players=players
+                    username_map = config.get("username-player_name")
                 )
                 
                 vote_block = voter_info.select_one(":nth-child(3) > h6")
@@ -284,10 +284,13 @@ def setup_authenticated_driver(config: dict):
         options.set_preference("dom.ipc.processCount", 1)
         options.set_preference("browser.tabs.remote.autostart", False)
         options.set_preference("layers.acceleration.disabled", True)
+        options.set_preference("permissions.default.image", 2)
+        options.set_preference("dom.ipc.processCount", 1) 
         options.set_preference("gfx.webrender.all", False)
 
         try:
             profile_path = get_firefox_profile_path()
+            options.profile = FirefoxProfile(profile_path)
         except Exception as e:
             print(f"No local Firefox profile found (expected in Docker) — continuing headless without one: {e}")
 

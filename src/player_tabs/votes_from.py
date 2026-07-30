@@ -26,6 +26,7 @@ def generate_votes_from(player_stats_data, player_name):
             spacing=10
         ),
         border_radius=10,
+        height=600,
         expand=True
     )
 

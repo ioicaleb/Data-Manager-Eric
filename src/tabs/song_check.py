@@ -6,9 +6,11 @@ def generate_songs_tab(page: ft.Page):
     Renders an on-demand keyword search dashboard canvas utilizing 
     high-speed dictionary indexes loaded into container memory.
     """
+    content_height = max(400, (page.height or 900) - 260)
+
     results_list = ft.Column(
         spacing=15,
-        expand=True,
+        height=content_height,
         controls=[],
         scroll=ft.ScrollMode.HIDDEN
     )

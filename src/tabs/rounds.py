@@ -9,6 +9,7 @@ def generate_rounds_tab(page: ft.Page):
     song submissions, tracks metadata, and final point winners.
     """
     is_mobile = (page.width or 1200) < 700
+    content_height = max(400, (page.height or 900) - 220)
 
     content_stack = ft.Stack(expand=True)
     navigation_menu = ft.Column(
@@ -16,7 +17,7 @@ def generate_rounds_tab(page: ft.Page):
         alignment=ft.MainAxisAlignment.START,
         spacing=15,
         scroll=ft.ScrollMode.HIDDEN,
-        expand=True
+        height=content_height
     )
 
     views_map = {}
@@ -139,9 +140,8 @@ def generate_rounds_tab(page: ft.Page):
                     controls=[], 
                     spacing=15,
                     scroll=ft.ScrollMode.HIDDEN,
-                    expand=True
+                    height=content_height
                 ),
-                expand=True,
                 alignment=ft.Alignment.TOP_LEFT,
                 bgcolor=ft.Colors.TRANSPARENT
             )

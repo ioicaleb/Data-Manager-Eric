@@ -212,6 +212,7 @@ def generate_player_stats(player_stats_data):
     player_stats = ft.Container(
         content=player_stats_list,
         expand=True,
+        height = 600,
         visible=False
     )
 

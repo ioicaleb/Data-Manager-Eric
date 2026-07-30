@@ -18,6 +18,7 @@ def generate_top_songs(player_stats_data):
         ),
         border_radius=10,
         alignment=ft.Alignment.CENTER_LEFT,
+        height=600,
         expand=True
     )
 

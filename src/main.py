@@ -90,7 +90,7 @@ def save_league_data_to_postgres(league_id: str, secret_pwd_hash: str, payload: 
         )
     else:
         cur.execute(
-            "INSERT INTO music_leagues (league_id, admin_password_hash, browser_type, scraped_data) VALUES (%s, %s, %s, %s, %s);",
+            "INSERT INTO music_leagues (league_id, admin_password_hash, browser_type, scraped_data) VALUES (%s, %s, %s, %s);",
             (league_id, secret_pwd_hash, browser, json.dumps(payload))
         )
     conn.commit()
@@ -284,11 +284,17 @@ def show_loading_page(page: ft.Page):
     
     return progress_bar, status_text
 
-def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, pwd_hash: str):
+async def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, pwd_hash: str):
     """
     Renders an interactive administrative onboarding panel to map 
     scraped system usernames directly to clean visual profile names.
+
+    Blocks until the user clicks Save or Skip — the caller must await
+    this. Without blocking, whatever code runs immediately after showing
+    the wizard would race ahead and repaint the page before the user
+    could finish, using stale data that hasn't had the mapping applied.
     """
+    wizard_done = asyncio.Event()
     page.title = "Username Wizard"
     
     existing_map = payload.get("username_mapping") or {}
@@ -356,12 +362,12 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
     async def handle_save_and_sync(e):
         compiled_username_map = {}
         new_players_list = payload.get("players") or []
-        
+
         for username_key, text_control in text_fields_registry.items():
             clean_display_name = text_control.value.strip()
             if not clean_display_name:
                 clean_display_name = username_key
-                
+
             compiled_username_map[username_key] = clean_display_name
 
             player_exists = any(p.get("name") == clean_display_name for p in new_players_list)
@@ -372,9 +378,31 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
                     "votes_to": 0,
                     "is_manual_entry": "Custom_Unset" in username_key
                 })
+        remapped_away_names = {
+            raw for raw, mapped in compiled_username_map.items() if raw != mapped
+        }
+        new_players_list = [
+            p for p in new_players_list
+            if p.get("name") not in remapped_away_names
+        ]
 
         payload["username_mapping"] = compiled_username_map
         payload["players"] = new_players_list
+
+        existing_songs = payload.get("songs") or []
+        for song in existing_songs:
+            if not isinstance(song, dict):
+                continue
+            raw_submitter = song.get("player_name")
+            if raw_submitter in compiled_username_map:
+                song["player_name"] = compiled_username_map[raw_submitter]
+            for voter in song.get("voters", []) or []:
+                if not isinstance(voter, dict):
+                    continue
+                raw_voter = voter.get("name")
+                if raw_voter in compiled_username_map:
+                    voter["name"] = compiled_username_map[raw_voter]
+        payload["songs"] = existing_songs
 
         initialize_memory_cache(payload)
         build_static_dashboard_cache(payload)
@@ -391,6 +419,7 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
         page.horizontal_alignment = ft.CrossAxisAlignment.START
         page.vertical_alignment = ft.MainAxisAlignment.START
         await main_dashboard(page)
+        wizard_done.set()
 
     async def handle_skip_wizards(e):
         if not payload.get("username_mapping"):
@@ -404,6 +433,7 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
         page.horizontal_alignment = ft.CrossAxisAlignment.START
         page.vertical_alignment = ft.MainAxisAlignment.START
         await main_dashboard(page)
+        wizard_done.set()
 
     wizard_is_mobile = (page.width or 1200) < 700
     wizard_panel = ft.Container(
@@ -458,6 +488,8 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
 
     page.add(wizard_panel)
     page.update()
+
+    await wizard_done.wait()
 
 async def loading_gateway(page: ft.Page):
     """The central gateway layout that enables players to access stats and admins to run setups."""
@@ -578,7 +610,8 @@ async def loading_gateway(page: ft.Page):
                 page.vertical_alignment = ft.MainAxisAlignment.CENTER
                 page.controls.clear()
                 
-                show_username_mapping_wizard(page, db_cache_payload, l_id, hashed_pwd)
+                await show_username_mapping_wizard(page, db_cache_payload, l_id, hashed_pwd)
+                return
 
             progress_bar.value = 0.80
             status_text.value = "Initializing data storage..."

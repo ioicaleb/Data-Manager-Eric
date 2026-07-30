@@ -56,7 +56,7 @@ class Song:
         self.votes = votes
         self.voters = voters if voters is not None else []
 
-def convert_username_to_name(username, players):
+def convert_username_to_name(username, username_map = None):
     """
     Convert a username to a player name.
     
@@ -67,15 +67,7 @@ def convert_username_to_name(username, players):
     Returns:
         str: The corresponding player name, or the username if not found
     """
-    if not players:
+    if not username_map:
         return username
-
-    if isinstance(players, dict):
-        return players.get(username, username)
-
-    for player in players:
-        if isinstance(player, (list, tuple)) and len(player) >= 2:
-            if username == player[0]:
-                return player[1]
     
-    return username
+    return username_map.get(username, username)

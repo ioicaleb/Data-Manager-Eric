@@ -141,24 +141,27 @@ def process_standings_comments():
     return data
 
 def prepare_master_matrix():
+    """
+    Returns a list of {"player": name, "votes": {target_player: vote_count}}
+    dicts. Deliberately name-keyed rather than positional: not every player
+    has a vote entry for every other player, so relying on row position to
+    line up with column position silently misaligns the table the moment
+    any row is a different length or order than another (which is normal,
+    not an error state, for an in-progress or unevenly-voted league).
+    """
     data = []
     players_data = get_players() or []
-    
+
     for player in players_data:
-        row = []
         player_name = player.get("name", "Unknown")
-        if player_name and player_name != "[Left the league]":
-        
-            stats_profile = read_json(f"precomputed_stats_{player_name}") or {}
-            votes = stats_profile.get("votes_from_data", {}).copy()
-            
-            votes[player_name] = 0
-            sorted_votes = sorted(votes.items(), key=lambda x: x[0])
-            
-            row.append(player_name)
-            for target_player, vote_count in sorted_votes:
-                row.append(vote_count)
-        data.append(row)
+        if not player_name or player_name == "[Left the league]":
+            continue
+
+        stats_profile = read_json(f"precomputed_stats_{player_name}") or {}
+        votes = stats_profile.get("votes_from_data", {}).copy()
+        votes[player_name] = 0
+
+        data.append({"player": player_name, "votes": votes})
 
     return data
 

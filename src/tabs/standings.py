@@ -8,10 +8,11 @@ def generate_standings_tab(page: ft.Page):
     """
     is_mobile = (page.width or 1200) < 600
     line_size = 20 if is_mobile else 32
+    content_height = max(400, (page.height or 900) - 260)
 
-    votes_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN, expand = True)
-    wins_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN, expand = True)
-    comments_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN, expand = True)
+    votes_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN, height=content_height)
+    wins_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN, height=content_height)
+    comments_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN, height=content_height)
     
     def hydrate_live_standings_view():
         """
