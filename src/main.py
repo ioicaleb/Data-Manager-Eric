@@ -159,11 +159,6 @@ async def main_dashboard(page: ft.Page, start_tab_index=0, progress_callback=Non
 
     try:
         def _profile_progress(fraction: float, message: str):
-            # Player profiles are the slowest tab to build (avatar downloads +
-            # every stat view for every player), so it gets the largest share
-            # of the remaining progress range. generate_profile_tab already
-            # yields to the event loop after calling this, so this just needs
-            # to forward the scaled value up to the loading screen.
             progress_callback(0.20 + fraction * 0.60, message)
 
         profiles_container = await generate_profile_tab(
@@ -188,6 +183,8 @@ async def main_dashboard(page: ft.Page, start_tab_index=0, progress_callback=Non
 
     await _report(0.98, "Assembling...")
 
+    dashboard_is_mobile = (page.width or 1200) < 700
+
     tab_view = ft.Tabs(
         length=5,
         selected_index=start_tab_index,
@@ -196,6 +193,7 @@ async def main_dashboard(page: ft.Page, start_tab_index=0, progress_callback=Non
             expand=True,
             controls=[
                 ft.TabBar(
+                    scrollable=dashboard_is_mobile,
                     tabs=[
                         ft.Tab(label="Standings", icon=ft.Icons.LEADERBOARD),
                         ft.Tab(label="Matrix", icon=ft.Icons.GRID_ON),
@@ -232,9 +230,10 @@ async def main_dashboard(page: ft.Page, start_tab_index=0, progress_callback=Non
                             ft.Row(
                                 controls=[
                                     ft.Text(
-                                        "🎵 Eric the Data Manager", 
-                                        size=50, 
-                                        weight=ft.FontWeight.BOLD
+                                        "🎵 Eric the Data Manager" if not dashboard_is_mobile else "🎵 Eric",
+                                        size=28 if dashboard_is_mobile else 50,
+                                        weight=ft.FontWeight.BOLD,
+                                        text_align=ft.TextAlign.CENTER
                                     )
                                 ],
                                 alignment=ft.MainAxisAlignment.CENTER,
@@ -259,7 +258,7 @@ def show_loading_page(page: ft.Page):
     
     loading_text = ft.Text("Eric is Processing Your League", size=36, weight=ft.FontWeight.BOLD)
     
-    progress_bar = ft.ProgressBar(width=400, color="purple", value=0.0)
+    progress_bar = ft.ProgressBar(width=min(400, (page.width or 400) - 40), color="purple", value=0.0)
     status_text = ft.Text("Initializing secure runtime containers...", size=24, color="grey400")
     loading_spinner = ft.ProgressRing(width=20, stroke_width=2, color="purple")
     
@@ -302,19 +301,30 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
     text_fields_registry = {}
 
     def build_mapping_row(username: str, prefill_value: str = ""):
+        row_is_mobile = (page.width or 1200) < 700
+
         input_field = ft.TextField(
             label="Preferred Display Name",
             value=prefill_value or username,
-            width=280,
+            width=None if row_is_mobile else 280,
+            expand=row_is_mobile,
             hint_text="e.g., Eric S."
         )
         text_fields_registry[username] = input_field
-        
-        return ft.Container(
-            padding=10,
-            border_radius=8,
-            bgcolor=ft.Colors.GREY_900 if page.theme_mode == ft.ThemeMode.DARK else ft.Colors.GREY_100,
-            content=ft.Row(
+
+        if row_is_mobile:
+            content = ft.Column(
+                spacing=8,
+                controls=[
+                    ft.Row([
+                        ft.Icon(ft.Icons.PERSON_OUTLINE, color="purple"),
+                        ft.Text(username, size=18, weight=ft.FontWeight.BOLD, expand=True)
+                    ]),
+                    input_field
+                ]
+            )
+        else:
+            content = ft.Row(
                 controls=[
                     ft.Icon(ft.Icons.PERSON_OUTLINE, color="purple"),
                     ft.Text(username, size=20, weight=ft.FontWeight.BOLD, width=200),
@@ -323,6 +333,12 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
                 ],
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN
             )
+
+        return ft.Container(
+            padding=10,
+            border_radius=8,
+            bgcolor=ft.Colors.GREY_900 if page.theme_mode == ft.ThemeMode.DARK else ft.Colors.GREY_100,
+            content=content
         )
 
     for user in scraped_users:
@@ -391,10 +407,12 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
         page.vertical_alignment = ft.MainAxisAlignment.START
         await main_dashboard(page)
 
+    wizard_is_mobile = (page.width or 1200) < 700
     wizard_panel = ft.Container(
-        width=720,
-        height=800,
-        padding=30,
+        width=None if wizard_is_mobile else 720,
+        height=None if wizard_is_mobile else 800,
+        expand=wizard_is_mobile,
+        padding=20 if wizard_is_mobile else 30,
         border_radius=12,
         bgcolor=ft.Colors.SURFACE_CONTAINER,
         content=ft.Column(
@@ -451,13 +469,16 @@ async def loading_gateway(page: ft.Page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
 
-    league_id_field = ft.TextField(label="Music League ID/URL", width=380, hint_text="e.g., 4a7b9...")
-    admin_password_field = ft.TextField(label="Admin Password (Required for Scraping)", width=380, password=True, can_reveal_password=True)
+    is_mobile = (page.width or 1200) < 600
+    field_width = min(380, (page.width or 380) - 40)
+
+    league_id_field = ft.TextField(label="Music League ID/URL", width=field_width, hint_text="e.g., 4a7b9...")
+    admin_password_field = ft.TextField(label="Admin Password (Required for Scraping)", width=field_width, password=True, can_reveal_password=True)
     
     browser_dropdown = ft.Dropdown(
         label="Browser Used for Login",
         value="chromium",
-        width=380,
+        width=field_width,
         options=[
             ft.dropdown.Option("chromium", "Chromium (Google Chrome stable)"),
             ft.dropdown.Option("firefox", "Mozilla Firefox (Geckodriver)")
@@ -643,51 +664,60 @@ async def loading_gateway(page: ft.Page):
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=15,
             controls=[
-                ft.Text("🎵 Eric the Data Manager", size=44, weight=ft.FontWeight.BOLD),
-                ft.Text("Music League Data Manager", size=20, color="grey400"),
+                ft.Text("🎵 Eric the Data Manager", size=28 if is_mobile else 44, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
+                ft.Text("Music League Data Manager", size=16 if is_mobile else 20, color="grey400"),
                 ft.Container(height=10),
                 
                 league_id_field,
                 error_text,
                 
-                ft.Row([
-                    ft.Card(
-                        content=ft.Container(
-                            padding=20, width=280,
-                            content=ft.Column([
-                                ft.Text("League Member Portal", size=20, weight=ft.FontWeight.BOLD),
-                                ft.Text("View live leaderboards, vote matrices, track profiles, and round stats instantly.", size=18, color="grey"),
-                                ft.Container(height=48), 
-                                ft.ElevatedButton(
-                                    "View Analytics", 
-                                    on_click=lambda e: page.run_task(execute_portal_pipeline, False), 
-                                    icon=ft.Icons.VIEW_AGENDA, 
-                                    bgcolor="blue700", 
-                                    color="white"
+                ft.ResponsiveRow(
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    controls=[
+                        ft.Container(
+                            col={"xs": 12, "sm": 12, "md": 5, "lg": 4},
+                            content=ft.Card(
+                                content=ft.Container(
+                                    padding=20,
+                                    content=ft.Column([
+                                        ft.Text("League Member Portal", size=20, weight=ft.FontWeight.BOLD),
+                                        ft.Text("View live leaderboards, vote matrices, track profiles, and round stats instantly.", size=18, color="grey"),
+                                        ft.Container(height=32),
+                                        ft.ElevatedButton(
+                                            "View Analytics",
+                                            on_click=lambda e: page.run_task(execute_portal_pipeline, False),
+                                            icon=ft.Icons.VIEW_AGENDA,
+                                            bgcolor="blue700",
+                                            color="white"
+                                        )
+                                    ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
                                 )
-                            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-                        )
-                    ),
-                    
-                    ft.Card(
-                        content=ft.Container(
-                            padding=20, width=420,
-                            content=ft.Column([
-                                ft.Text("🛠️ Admin Panel", size=20, weight=ft.FontWeight.BOLD),
-                                ft.Text("Initialize new leagues or get results of new rounds.", size=16, color="grey"),
-                                admin_password_field,
-                                browser_dropdown,
-                                ft.ElevatedButton(
-                                    "Sync Data", 
-                                    on_click=lambda e: page.run_task(execute_portal_pipeline, True), 
-                                    icon=ft.Icons.RUN_CIRCLE, 
-                                    bgcolor="amber700", 
-                                    color="white"
+                            )
+                        ),
+
+                        ft.Container(
+                            col={"xs": 12, "sm": 12, "md": 6, "lg": 5},
+                            content=ft.Card(
+                                content=ft.Container(
+                                    padding=20,
+                                    content=ft.Column([
+                                        ft.Text("🛠️ Admin Panel", size=20, weight=ft.FontWeight.BOLD),
+                                        ft.Text("Initialize new leagues or get results of new rounds.", size=16, color="grey"),
+                                        admin_password_field,
+                                        browser_dropdown,
+                                        ft.ElevatedButton(
+                                            "Sync Data",
+                                            on_click=lambda e: page.run_task(execute_portal_pipeline, True),
+                                            icon=ft.Icons.RUN_CIRCLE,
+                                            bgcolor="amber700",
+                                            color="white"
+                                        )
+                                    ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10)
                                 )
-                            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10)
+                            )
                         )
-                    )
-                ], alignment=ft.MainAxisAlignment.CENTER, spacing=20)
+                    ]
+                )
             ]
         )
     )

@@ -123,8 +123,6 @@ def find_top_songs(voter_name, minimum=30):
     Final list is sorted by votes given (highest first), then by artist.
     """
     matched_songs = find_songs_by_voter(voter_name)
-
-    # Collect (votes_given, artist, song_id) for every song this voter voted on.
     scored = []
     for song in matched_songs:
         for voter in song.get("voters", []):
@@ -132,17 +130,15 @@ def find_top_songs(voter_name, minimum=30):
                 votes_given = int(voter.get("votes", 0))
                 if votes_given > 0:
                     scored.append((votes_given, song.get("artist", ""), song.get("id")))
-                break  # a given voter only appears once per song
+                break 
 
     if not scored:
         return []
 
-    # Group songs by the vote amount this voter gave them.
     by_vote_amount = {}
     for votes_given, artist, song_id in scored:
         by_vote_amount.setdefault(votes_given, []).append((votes_given, artist, song_id))
 
-    # Add whole tiers, highest vote amount first, until we've hit the minimum.
     result = []
     for votes_given in sorted(by_vote_amount.keys(), reverse=True):
         result.extend(by_vote_amount[votes_given])

@@ -8,13 +8,14 @@ def generate_rounds_tab(page: ft.Page):
     Renders an interactive, searchable sidebar layout displaying round themes, 
     song submissions, tracks metadata, and final point winners.
     """
+    is_mobile = (page.width or 1200) < 700
+
     content_stack = ft.Stack(expand=True)
     navigation_menu = ft.Column(
         controls=[],
         alignment=ft.MainAxisAlignment.START,
         spacing=15,
         scroll=ft.ScrollMode.HIDDEN,
-        width = 360,
         expand=True
     )
 
@@ -129,8 +130,8 @@ def generate_rounds_tab(page: ft.Page):
 
             round_header = ft.Column(
                 controls=[
-                    ft.Text(str(round_number), size=64, weight=ft.FontWeight.BOLD),
-                    ft.Text(f"{round_name} - {round_item.get('description', '')}", size=20)
+                    ft.Text(str(round_number), size=36 if is_mobile else 64, weight=ft.FontWeight.BOLD),
+                    ft.Text(f"{round_name} - {round_item.get('description', '')}", size=18 if is_mobile else 20)
                 ]
             )
             song_details = ft.Container(
@@ -142,8 +143,7 @@ def generate_rounds_tab(page: ft.Page):
                 ),
                 expand=True,
                 alignment=ft.Alignment.TOP_LEFT,
-                bgcolor=ft.Colors.TRANSPARENT,
-                width=1200 
+                bgcolor=ft.Colors.TRANSPARENT
             )
 
             for submission in round_item.get("submissions", []):
@@ -189,8 +189,7 @@ def generate_rounds_tab(page: ft.Page):
                     expand=True
                 ),
                 visible=False, 
-                expand=True,
-                width=1200
+                expand=True
             )
 
             views_map[f"Round {round_number} - {round_name}"] = round_view
@@ -240,20 +239,36 @@ def generate_rounds_tab(page: ft.Page):
 
     hydrate_live_rounds_view()
 
-    main_view = ft.Row(
-        vertical_alignment=ft.CrossAxisAlignment.START,
-        controls=[
-            ft.Container(
-                content=sidebar_layout,
-                width=360,
-                margin=ft.Margin(20, 10, 0, 0)
-            ),
-            ft.VerticalDivider(width=40, color=ft.Colors.TRANSPARENT),
-            content_stack
-        ],
-        alignment=ft.MainAxisAlignment.START,
-        expand=True
-    )
+    if is_mobile:
+        sidebar_box = ft.Container(
+            content=sidebar_layout,
+            height=280,
+            margin=ft.Margin(10, 10, 10, 0)
+        )
+        main_view = ft.Column(
+            controls=[
+                sidebar_box,
+                ft.Divider(height=10, color=ft.Colors.GREY_800),
+                ft.Container(content=content_stack, expand=True, padding=ft.Padding(10, 0, 10, 10))
+            ],
+            expand=True,
+            spacing=0
+        )
+    else:
+        main_view = ft.Row(
+            vertical_alignment=ft.CrossAxisAlignment.START,
+            controls=[
+                ft.Container(
+                    content=sidebar_layout,
+                    width=360,
+                    margin=ft.Margin(20, 10, 0, 0)
+                ),
+                ft.VerticalDivider(width=40, color=ft.Colors.TRANSPARENT),
+                content_stack
+            ],
+            alignment=ft.MainAxisAlignment.START,
+            expand=True
+        )
 
     rounds_container = ft.Container(
         content=main_view,

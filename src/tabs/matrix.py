@@ -3,8 +3,9 @@ from data_processing.search_processor import get_players
 from data_processing.data_processor import prepare_master_matrix
 
 def generate_matrix_tab(page: ft.Page):
-    COLUMN_WIDTH = 80
-    DATA_CELL_WIDTH = COLUMN_WIDTH + 20
+    is_mobile = (page.width or 1200) < 700
+    COLUMN_WIDTH = 56 if is_mobile else 80
+    DATA_CELL_WIDTH = COLUMN_WIDTH + (12 if is_mobile else 20)
 
     matrix_table = ft.DataTable(
         columns=[
@@ -61,15 +62,17 @@ def generate_matrix_tab(page: ft.Page):
         player_keys = []
         players_data = get_players() or []
 
-        if isinstance(players_data, dict) and player.get("name") != "[Left the league]":
+        if isinstance(players_data, dict):
             for name in players_data.keys():
+                if name == "[Left the league]":
+                    continue
                 player_keys.append(name)
                 matrix_table.columns.append(
                     ft.DataColumn(
                         ft.Container(
                             width=COLUMN_WIDTH + 10,
                             alignment=ft.Alignment.CENTER,
-                            content=ft.Text(name, size=18)
+                            content=ft.Text(name, size=14 if is_mobile else 18)
                         )
                     )
                 )
@@ -83,7 +86,7 @@ def generate_matrix_tab(page: ft.Page):
                             ft.Container(
                                 width=COLUMN_WIDTH + 10,
                                 alignment=ft.Alignment.CENTER,
-                                content=ft.Text(name, size=18),
+                                content=ft.Text(name, size=14 if is_mobile else 18),
                             ),
                         )
                     )
@@ -100,7 +103,7 @@ def generate_matrix_tab(page: ft.Page):
                         new_row.cells.append(
                             ft.DataCell(
                                 ft.Container(
-                                    content=ft.Text(row_player_name, size=16, weight=ft.FontWeight.BOLD),
+                                    content=ft.Text(row_player_name, size=13 if is_mobile else 16, weight=ft.FontWeight.BOLD),
                                     width=DATA_CELL_WIDTH,
                                     height=48,
                                     alignment=ft.Alignment.CENTER
@@ -128,7 +131,7 @@ def generate_matrix_tab(page: ft.Page):
                                 new_row.cells.append(
                                     ft.DataCell(
                                         ft.Container(
-                                            content=ft.Text(str(score), size=16, text_align=ft.TextAlign.CENTER),
+                                            content=ft.Text(str(score), size=13 if is_mobile else 16, text_align=ft.TextAlign.CENTER),
                                             width=DATA_CELL_WIDTH,
                                             height=48,
                                             alignment=ft.Alignment.CENTER

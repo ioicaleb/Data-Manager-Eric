@@ -16,7 +16,7 @@ def generate_votes_songs(player_stats_data, player_name):
             spacing=20
         ),
         border_radius=10,
-        height=600,
+        expand=True,
     )
     
     for song_id in vote_songs_data:

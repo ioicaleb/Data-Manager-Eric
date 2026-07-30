@@ -6,6 +6,9 @@ def generate_standings_tab(page: ft.Page):
     Renders a state-managed, responsive standings view panel.
     Guarantees isolation across multiple parallel database requests.
     """
+    is_mobile = (page.width or 1200) < 600
+    line_size = 20 if is_mobile else 32
+
     votes_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN, expand = True)
     wins_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN, expand = True)
     comments_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN, expand = True)
@@ -24,13 +27,13 @@ def generate_standings_tab(page: ft.Page):
         comments_column.controls.clear()
         
         for line in votes_data:
-            votes_column.controls.append(ft.Text(line, size=32))
+            votes_column.controls.append(ft.Text(line, size=line_size))
 
         for line in wins_data:
-            wins_column.controls.append(ft.Text(line, size=32))
+            wins_column.controls.append(ft.Text(line, size=line_size))
             
         for line in comments_data:
-            comments_column.controls.append(ft.Text(line, size=32))
+            comments_column.controls.append(ft.Text(line, size=line_size))
 
     hydrate_live_standings_view()
 
@@ -58,21 +61,22 @@ def generate_standings_tab(page: ft.Page):
             ]
         )
     )
-    
+    content_width = None if is_mobile else min(600, (page.width or 600))
+
     standings_container = ft.Container(
         content=ft.Row(
             controls=[
                 ft.Column(
                     controls=[tab_view],
-                    width=600,
-                    margin=ft.Margin(200, 0, 0, 0),
-                    expand=False,
+                    width=content_width,
+                    expand=is_mobile,
                 )
             ],
             alignment=ft.MainAxisAlignment.CENTER,
             vertical_alignment=ft.CrossAxisAlignment.START
         ),
-        expand=True
+        expand=True,
+        padding=ft.Padding(10, 0, 10, 0) if is_mobile else ft.Padding(0, 0, 0, 0)
     )
 
     return standings_container

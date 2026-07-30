@@ -20,6 +20,8 @@ async def generate_profile_tab(page: ft.Page, return_callback, progress_callback
             progress_callback(fraction, message)
         await asyncio.sleep(0)
 
+    is_mobile = (page.width or 1200) < 700
+
     master_profile_wrapper = ft.Container(expand=True)
     profiles_list = ft.ListView(expand=True, spacing=10, padding=10)
 
@@ -87,17 +89,18 @@ async def generate_profile_tab(page: ft.Page, return_callback, progress_callback
             on_click=return_to_players
         )
 
+        avatar_size = 64 if is_mobile else 100
         if avatar_b64:
             avatar = ft.Image(
                 src=f"data:image/jpeg;base64,{avatar_b64}",
-                width=100,
-                height=100,
+                width=avatar_size,
+                height=avatar_size,
                 fit=ft.BoxFit.COVER,
-                border_radius=50,
+                border_radius=avatar_size // 2,
                 gapless_playback=True
             )
         else:
-            avatar = ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=100, color=ft.Colors.GREY_600)
+            avatar = ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=avatar_size, color=ft.Colors.GREY_600)
 
         top_songs = generate_top_songs(player_stats_data)
         all_songs = generate_all_songs(player_stats_data)
@@ -121,11 +124,17 @@ async def generate_profile_tab(page: ft.Page, return_callback, progress_callback
         for t_key, container in views_map.items():
             container.visible = (t_key == first_title)
 
+        menu_dropdown_ref = {}
+
         def handle_menu_click(e):
-            clicked_title = e.control.content.value
+            clicked_title = e.control.content.value if not is_mobile else e.control.value
 
             for title, view_container in views_map.items():
                 view_container.visible = (title == clicked_title)
+
+            if is_mobile:
+                page.update()
+                return
 
             try:
                 main_row_split = profile_view.controls[2]
@@ -140,58 +149,86 @@ async def generate_profile_tab(page: ft.Page, return_callback, progress_callback
 
             page.update()
 
-        profile_view = ft.Column(
-            expand=True,
+        header_row = ft.Row(
             controls=[
-                ft.Row(
-                    controls=[
-                        back_button,
-                        avatar,
-                        ft.Column([
-                            ft.Text(player.get('name', 'Player'), size=32, weight=ft.FontWeight.BOLD),
-                            ft.Text(f"{player.get('position', '#?')} — {player.get('votes_to', 0)} Votes Received", size=20)
-                        ])
-                    ],
-                    spacing=20
-                ),
-                ft.Divider(height=40, color=ft.Colors.GREY_800),
-                ft.Row(
-                    vertical_alignment=ft.CrossAxisAlignment.START,
-                    alignment=ft.MainAxisAlignment.START,
-                    expand=True,
-                    controls=[
-                        ft.Container(
-                            margin=ft.Margin(20, 0, 0, 0),
-                            content=ft.Column(
-                                alignment=ft.MainAxisAlignment.START,
-                                spacing=15,
-                                controls=[
-                                    ft.TextButton(
-                                        content=ft.Text(
-                                            title,
-                                            size=18,
-                                            weight=ft.FontWeight.BOLD,
-                                            color=ft.Colors.PURPLE_500 if title == first_title else None
-                                        ),
-                                        on_click=handle_menu_click,
-                                        style=ft.ButtonStyle(padding=0)
-                                    ) for title in views_map.keys()
-                                ],
-                            ),
-                        ),
-                        ft.VerticalDivider(width=40, color=ft.Colors.GREY_800),
-                        ft.Container(
-                            margin=ft.Margin(20, 0, 0, 0),
-                            expand=True,
-                            content=ft.Column(
-                                expand=True,
-                                controls=list(views_map.values()),
-                            ),
-                        )
-                    ],
-                ),
+                back_button,
+                avatar,
+                ft.Column([
+                    ft.Text(player.get('name', 'Player'), size=22 if is_mobile else 32, weight=ft.FontWeight.BOLD),
+                    ft.Text(
+                        f"{player.get('position', '#?')} — {player.get('votes_to', 0)} Votes Received",
+                        size=14 if is_mobile else 20
+                    )
+                ])
             ],
+            spacing=20,
+            wrap=True
         )
+
+        if is_mobile:
+            section_picker = ft.Dropdown(
+                value=first_title,
+                options=[ft.dropdown.Option(title) for title in views_map.keys()],
+                on_change=handle_menu_click,
+                expand=True
+            )
+
+            profile_view = ft.Column(
+                expand=True,
+                controls=[
+                    header_row,
+                    ft.Divider(height=20, color=ft.Colors.GREY_800),
+                    section_picker,
+                    ft.Container(height=10),
+                    ft.Container(
+                        expand=True,
+                        content=ft.Column(expand=True, controls=list(views_map.values())),
+                    )
+                ],
+            )
+        else:
+            profile_view = ft.Column(
+                expand=True,
+                controls=[
+                    header_row,
+                    ft.Divider(height=40, color=ft.Colors.GREY_800),
+                    ft.Row(
+                        vertical_alignment=ft.CrossAxisAlignment.START,
+                        alignment=ft.MainAxisAlignment.START,
+                        expand=True,
+                        controls=[
+                            ft.Container(
+                                margin=ft.Margin(20, 0, 0, 0),
+                                content=ft.Column(
+                                    alignment=ft.MainAxisAlignment.START,
+                                    spacing=15,
+                                    controls=[
+                                        ft.TextButton(
+                                            content=ft.Text(
+                                                title,
+                                                size=18,
+                                                weight=ft.FontWeight.BOLD,
+                                                color=ft.Colors.PURPLE_500 if title == first_title else None
+                                            ),
+                                            on_click=handle_menu_click,
+                                            style=ft.ButtonStyle(padding=0)
+                                        ) for title in views_map.keys()
+                                    ],
+                                ),
+                            ),
+                            ft.VerticalDivider(width=40, color=ft.Colors.GREY_800),
+                            ft.Container(
+                                margin=ft.Margin(20, 0, 0, 0),
+                                expand=True,
+                                content=ft.Column(
+                                    expand=True,
+                                    controls=list(views_map.values()),
+                                ),
+                            )
+                        ],
+                    ),
+                ],
+            )
 
         return profile_view
 
@@ -242,8 +279,8 @@ async def generate_profile_tab(page: ft.Page, return_callback, progress_callback
             controls=[
                 ft.Column(
                     controls=[profiles_list],
-                    width=500,
-                    expand=False,
+                    width=None if is_mobile else 500,
+                    expand=is_mobile,
                     scroll=ft.ScrollMode.ALWAYS
                 )
             ],

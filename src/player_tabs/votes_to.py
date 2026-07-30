@@ -14,7 +14,6 @@ def generate_votes_to(player_stats_data):
             scroll=ft.ScrollMode.HIDDEN,
         ),
         border_radius=10,
-        height=600,
         alignment=ft.Alignment.CENTER_LEFT,
         expand=True
     )

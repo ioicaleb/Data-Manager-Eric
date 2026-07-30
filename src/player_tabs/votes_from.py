@@ -7,7 +7,6 @@ def generate_votes_from(player_stats_data, player_name):
     """
     raw_votes_from = player_stats_data.get("votes_from_data") or {}
     
-    
     if isinstance(raw_votes_from, dict):
         votes_from_data = sorted(raw_votes_from.items(), key=lambda x: x[1], reverse=True)
     elif isinstance(raw_votes_from, list):
@@ -27,7 +26,6 @@ def generate_votes_from(player_stats_data, player_name):
             spacing=10
         ),
         border_radius=10,
-        height=600,
         expand=True
     )
 
@@ -44,12 +42,12 @@ def generate_votes_from(player_stats_data, player_name):
                                 ], spacing=10),
                                 ft.Text(f"{vote_count} pts total", size=22, weight=ft.FontWeight.BOLD, color="amber200")
                             ],
-                            width = 300,
+                            expand=True,
                             alignment=ft.MainAxisAlignment.SPACE_BETWEEN
                         ),
                         padding = 20
                     ),
-                    margin = ft.Margin(left = 60)
+                    margin = ft.Margin(left = 20)
                 )
             )
 
