@@ -279,6 +279,7 @@ def setup_authenticated_driver(config: dict):
     across all musicleague subdomains before data collection queries trigger.
     """
     browser_type = config.get("browser_type", "chromium")
+    driver = webdriver()
     if browser_type == "firefox":
         try:
             profile_path = get_firefox_profile_path()
