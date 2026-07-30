@@ -6,9 +6,9 @@ def generate_standings_tab(page: ft.Page):
     Renders a state-managed, responsive standings view panel.
     Guarantees isolation across multiple parallel database requests.
     """
-    votes_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN)
-    wins_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN)
-    comments_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN)
+    votes_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN, expand = True)
+    wins_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN, expand = True)
+    comments_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN, expand = True)
     
     def hydrate_live_standings_view():
         """
@@ -66,8 +66,7 @@ def generate_standings_tab(page: ft.Page):
                     controls=[tab_view],
                     width=600,
                     margin=ft.Margin(200, 0, 0, 0),
-                    expand=False,     
-                    scroll=ft.ScrollMode.HIDDEN
+                    expand=False,
                 )
             ],
             alignment=ft.MainAxisAlignment.CENTER,

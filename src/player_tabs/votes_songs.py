@@ -35,7 +35,7 @@ def generate_votes_songs(player_stats_data, player_name):
                 
                 song_info = ft.Column(
                     controls=[
-                        ft.Text(f"🎵 {song.get('name', 'Unknown Track')}", size=24, weight=ft.FontWeight.W_500, color="purple100"),
+                        ft.Text(f"🎵 {song.get('name', 'Unknown Track')}", size=24, weight=ft.FontWeight.W_500),
                         ft.Text(f"Artist: {song.get('artist', 'Unknown')}", size=18),
                         ft.Text(f"Album: {song.get('album', 'Unknown')}", size=18),
                         ft.Text(f"Submitted By: {song.get('player_name', 'Unknown')}", size=18, color="amber200"),

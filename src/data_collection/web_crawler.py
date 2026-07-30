@@ -150,7 +150,10 @@ def get_all_rounds(driver, config):
             rounds.append(round_data)
         i += 1
             
-    rounds.sort(key=lambda x: x.round_number)
+    if isinstance(rounds, dict):
+        rounds.sort(key=lambda x: x["round_number"])
+    else:
+        rounds.sort(key=lambda x: x.round_number)
     print("Got all rounds")
     return rounds
 
@@ -175,6 +178,7 @@ def check_for_new_rounds(config, results=None):
             print("No new rounds detected.")
             return results
     finally:
+
         driver.quit()
 
 def get_recent_round_number(driver):
@@ -233,8 +237,11 @@ def get_missing_rounds(driver, config, missing_rounds, existing_rounds_cache):
         round_data = get_round_results(driver, config)
         if round_data:
             rounds.append(round_data)
-            
-    rounds.sort(key=lambda x: x.round_number)
+
+    if isinstance(rounds, dict):
+        rounds.sort(key=lambda x: x["round_number"])
+    else:
+        rounds.sort(key=lambda x: x.round_number)
     return rounds
 
 def get_firefox_profile_path():
@@ -269,7 +276,7 @@ def setup_authenticated_driver(config: dict):
     across all musicleague subdomains before data collection queries trigger.
     """
     browser_type = config.get("browser_type", "chromium")
-    
+    driver = None
     if browser_type == "firefox":
         try:
             profile_path = get_firefox_profile_path()

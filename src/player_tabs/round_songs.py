@@ -30,7 +30,7 @@ def generate_round_songs(player_stats_data):
             round_block = ft.Column(
                 controls=[
                     ft.Text(
-                        f"Round {round_item.get('round_id', '?')} — {round_item.get('title', 'Unknown Round Title')}:", 
+                        f"Round {round_item.get('round_number', '?')} — {round_item.get('title', 'Unknown Round Title')}:", 
                         size=22, 
                         weight=ft.FontWeight.BOLD,
                         color="purple100"

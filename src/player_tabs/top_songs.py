@@ -34,7 +34,7 @@ def generate_top_songs(player_stats_data):
                     controls=[
                         ft.Row([
                             ft.Icon(ft.Icons.STAR, color="amber", size=24),
-                            ft.Text(f"{song.get('name', 'Unknown Track')}", size=22, weight=ft.FontWeight.W_600, color="purple100")
+                            ft.Text(f"{song.get('name', 'Unknown Track')}", size=22, weight=ft.FontWeight.W_600)
                         ], spacing=10),
                         ft.Text(f"Artist: {song.get('artist', 'Unknown')}", size=16),
                         ft.Text(f"Album: {song.get('album', 'Unknown')}", size=16),

@@ -124,12 +124,12 @@ def generate_rounds_tab(page: ft.Page):
             return
 
         for round_item in rounds_data:
-            round_id = round_item.get("id", "_")
-            round_name = round_item.get("title", f"Round {round_id}")
+            round_number = round_item.get("id", "_")
+            round_name = round_item.get("title", f"Round {round_number}")
 
             round_header = ft.Column(
                 controls=[
-                    ft.Text(str(round_id), size=64, weight=ft.FontWeight.BOLD),
+                    ft.Text(str(round_number), size=64, weight=ft.FontWeight.BOLD),
                     ft.Text(f"{round_name} - {round_item.get('description', '')}", size=20)
                 ]
             )
@@ -193,7 +193,7 @@ def generate_rounds_tab(page: ft.Page):
                 width=1200
             )
 
-            views_map[f"Round {round_id} - {round_name}"] = round_view
+            views_map[f"Round {round_number} - {round_name}"] = round_view
 
         if views_map:
             current_selected_title[0] = list(views_map.keys())[0]

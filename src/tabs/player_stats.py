@@ -1,8 +1,7 @@
+import asyncio
 import flet as ft
-import urllib.parse
 from data_processing.data_processor import get_players
 from data_processing.cache_manager import read_json
-
 
 from player_tabs.top_songs import generate_top_songs
 from player_tabs.all_songs import generate_all_songs
@@ -12,55 +11,91 @@ from player_tabs.votes_to import generate_votes_to
 from player_tabs.player_stats import generate_player_stats
 from player_tabs.votes_songs import generate_votes_songs
 
-def generate_profile_tab(page: ft.Page, return_callback):
-    """
-    Highly optimized interactive player profile selection portal.
-    Bypasses main-thread I/O bottlenecks to maximize initial tab load speeds.
-    """
+
+async def generate_profile_tab(page: ft.Page, return_callback, progress_callback=None):
+    from main import fetch_avatar_base64_raw
+
+    async def _report(fraction: float, message: str):
+        if progress_callback:
+            progress_callback(fraction, message)
+        await asyncio.sleep(0)
+
     master_profile_wrapper = ft.Container(expand=True)
     profiles_list = ft.ListView(expand=True, spacing=10, padding=10)
-    
+
+    await _report(0.0, "Loading player roster...")
     players_data = get_players() or []
+
+    players_iterable = []
+    if isinstance(players_data, dict):
+        for k, v in players_data.items():
+            if isinstance(v, dict) and k != "[Left the league]":
+                if "name" not in v:
+                    v["name"] = k
+                players_iterable.append(v)
+    elif isinstance(players_data, list):
+        players_iterable = [p for p in players_data if isinstance(p, dict) and p.get("name") != "[Left the league]"]
+
+    def _load_player_data(p_obj):
+        name = p_obj.get("name") or p_obj.get("player") or "Unknown Player"
+        stats = read_json(f"precomputed_stats_{name}") or {}
+        avatar_url = stats.get("avatar_url")
+        avatar_b64 = fetch_avatar_base64_raw(avatar_url) if avatar_url else ""
+        return name, stats, avatar_b64
+
+    player_stats_cache = {}
+    avatar_cache = {}
+    total_players = len(players_iterable)
+
+    if players_iterable:
+        await _report(0.05, f"Fetching player photos & stats for {total_players} players...")
+        tasks = [asyncio.to_thread(_load_player_data, p) for p in players_iterable]
+        completed = 0
+        for coro in asyncio.as_completed(tasks):
+            name, stats, avatar_b64 = await coro
+            player_stats_cache[name] = stats
+            avatar_cache[name] = avatar_b64
+            completed += 1
+            await _report(
+                0.05 + 0.55 * (completed / total_players),
+                f"Fetching player photos & stats — {completed}/{total_players}"
+            )
 
     def return_to_players(e):
         profile_details_box.visible = False
         list_view_box.visible = True
         page.update()
 
-    async def get_player_profile(player: dict):
-        page.splash = ft.ProgressBar()
+    def show_player_profile(player_name):
+        view = player_profiles_map.get(player_name)
+        if view is None:
+            return
+        profile_details_box.content = view
+        list_view_box.visible = False
+        profile_details_box.visible = True
         page.update()
 
-        name = player.get("name", "Unknown")
-        player_stats_data = read_json(f"precomputed_stats_{name}") or {}
+    def create_click_handler(target_name):
+        return lambda e: show_player_profile(target_name)
 
-        page.splash = None
+    def build_player_profile_view(player: dict, player_stats_data: dict, avatar_b64: str):
+        name = player.get("name", "Unknown")
 
         back_button = ft.Button(
             content="Back to List",
             icon=ft.Icons.ARROW_BACK,
             on_click=return_to_players
         )
-        
-        local_img_path = player_stats_data.get("avatar_url")
-        if local_img_path:
-            from main import fetch_avatar_base64_raw
-            
-            base64_large_str = fetch_avatar_base64_raw(local_img_path)
 
-            if base64_large_str:
-                large_data_uri = f"data:image/jpeg;base64,{base64_large_str}"
-                
-                avatar = ft.Image(
-                    src=large_data_uri,
-                    width=100, 
-                    height=100, 
-                    fit=ft.BoxFit.COVER, 
-                    border_radius=50,
-                    gapless_playback=True
-                )
-            else:
-                avatar = ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=100, color=ft.Colors.GREY_600)
+        if avatar_b64:
+            avatar = ft.Image(
+                src=f"data:image/jpeg;base64,{avatar_b64}",
+                width=100,
+                height=100,
+                fit=ft.BoxFit.COVER,
+                border_radius=50,
+                gapless_playback=True
+            )
         else:
             avatar = ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=100, color=ft.Colors.GREY_600)
 
@@ -88,56 +123,22 @@ def generate_profile_tab(page: ft.Page, return_callback):
 
         def handle_menu_click(e):
             clicked_title = e.control.content.value
-            is_dark_mode = page.theme_mode == ft.ThemeMode.DARK
-            default_color = ft.Colors.WHITE if is_dark_mode else ft.Colors.BLACK
 
             for title, view_container in views_map.items():
                 view_container.visible = (title == clicked_title)
-            
+
             try:
                 main_row_split = profile_view.controls[2]
                 left_menu_container = main_row_split.controls[0]
                 actual_menu_column = left_menu_container.content
 
                 for button in actual_menu_column.controls:
-                    if button.content.value == clicked_title:
-                        button.content.color = ft.Colors.PURPLE_500
-                    else:
-                        button.content.color = default_color
+                    button.content.color = ft.Colors.PURPLE_500 if button.content.value == clicked_title else None
             except Exception as loop_err:
                 print(f"Menu click text tracking realignment failed: {loop_err}")
                 e.control.content.color = ft.Colors.PURPLE_500
-            
+
             page.update()
-
-        def toggle_theme(e):
-            if page.theme_mode == ft.ThemeMode.DARK:
-                page.theme_mode = ft.ThemeMode.LIGHT
-                theme_switch.icon = ft.Icons.BRIGHTNESS_7
-            else:
-                page.theme_mode = ft.ThemeMode.DARK
-                theme_switch.icon = ft.Icons.BRIGHTNESS_4
-
-            is_dark_mode = page.theme_mode == ft.ThemeMode.DARK
-            default_color = ft.Colors.WHITE if is_dark_mode else ft.Colors.BLACK
-            
-            try:
-                main_row_split = profile_view.controls[2]
-                left_menu_container = main_row_split.controls[0]
-                actual_menu_column = left_menu_container.content
-
-                for button in actual_menu_column.controls:
-                    if button.content.color != ft.Colors.PURPLE_500:
-                        button.content.color = default_color
-            except Exception as theme_err:
-                print(f"Theme change text tracking realignment failed: {theme_err}")
-            page.update()
-    
-        theme_switch = ft.IconButton(
-            icon=ft.Icons.BRIGHTNESS_4,
-            on_click=toggle_theme,
-            tooltip="Toggle Dark Mode"
-        )
 
         profile_view = ft.Column(
             expand=True,
@@ -167,10 +168,10 @@ def generate_profile_tab(page: ft.Page, return_callback):
                                 controls=[
                                     ft.TextButton(
                                         content=ft.Text(
-                                            title, 
-                                            size=18, 
+                                            title,
+                                            size=18,
                                             weight=ft.FontWeight.BOLD,
-                                            color=ft.Colors.PURPLE_500 if title == first_title else (ft.Colors.WHITE if page.theme_mode == ft.ThemeMode.DARK else ft.Colors.BLACK)
+                                            color=ft.Colors.PURPLE_500 if title == first_title else None
                                         ),
                                         on_click=handle_menu_click,
                                         style=ft.ButtonStyle(padding=0)
@@ -191,83 +192,50 @@ def generate_profile_tab(page: ft.Page, return_callback):
                 ),
             ],
         )
-        
-        profile_details_box.content = profile_view
-        list_view_box.visible = False
-        profile_details_box.visible = True
-        page.update()
 
-    def create_click_handler(target_player):
-        return lambda e: page.run_task(get_player_profile, target_player)
+        return profile_view
 
-    players_iterable = []
-    if isinstance(players_data, dict):
-        for k, v in players_data.items():
-            if isinstance(v, dict) and k != "[Left the league]":
-                if "name" not in v:
-                    v["name"] = k
-                players_iterable.append(v)
-    elif isinstance(players_data, list):
-        players_iterable = [p for p in players_data if isinstance(p, dict) and p.get("name") != "[Left the league]"]
+    player_profiles_map = {}
+    for idx, p_obj in enumerate(players_iterable, start=1):
+        name = p_obj.get("name") or p_obj.get("player") or "Unknown Player"
+        player_profiles_map[name] = build_player_profile_view(
+            p_obj, player_stats_cache.get(name, {}), avatar_cache.get(name, "")
+        )
+        if total_players:
+            await _report(
+                0.60 + 0.35 * (idx / total_players),
+                f"Building player profile views — {idx}/{total_players}"
+            )
 
-    avatar_controls_registry = {}
+    await _report(0.97, "Finishing up player profiles...")
 
     for p_obj in players_iterable:
         p_name = p_obj.get("name") or p_obj.get("player") or "Unknown Player"
         p_votes = p_obj.get("votes_to", 0)
         p_rank = p_obj.get("position", "#?")
 
-        placeholder_icon = ft.Container(
-            content=ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=40, color=ft.Colors.RED_400),
-            width=50,
-            height=50,
-            alignment=ft.Alignment.CENTER
-        )
-        avatar_controls_registry[p_name] = placeholder_icon
+        avatar_b64 = avatar_cache.get(p_name, "")
+        if avatar_b64:
+            leading_control = ft.Image(
+                src=f"data:image/jpeg;base64,{avatar_b64}",
+                fit=ft.BoxFit.COVER,
+                width=50,
+                height=50,
+                border_radius=25,
+                gapless_playback=True
+            )
+        else:
+            leading_control = ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=40, color=ft.Colors.RED_400)
 
         profiles_list.controls.append(
             ft.ListTile(
-                leading=placeholder_icon,
+                leading=ft.Container(content=leading_control, width=50, height=50, alignment=ft.Alignment.CENTER),
                 title=ft.Text(f"{p_rank}. {p_name}", size=20, weight=ft.FontWeight.BOLD),
                 subtitle=ft.Text(f"Total Votes Received: {p_votes}"),
                 trailing=ft.Icon(ft.Icons.CHEVRON_RIGHT),
-                on_click=create_click_handler(p_obj)
+                on_click=create_click_handler(p_name)
             )
         )
-
-    async def hydrate_player_avatars_async():
-        """Fetches and renders avatar image assets natively using local function lookups."""
-        from main import fetch_avatar_base64_raw
-        import asyncio
-        
-        for name, container_control in avatar_controls_registry.items():
-            try:
-                p_stats = read_json(f"precomputed_stats_{name}") or {}
-                img_url = p_stats.get("avatar_url")
-                
-                if img_url:
-                    base64_data_str = fetch_avatar_base64_raw(img_url)
-                    
-                    if base64_data_str:
-                        data_uri_string = f"data:image/jpeg;base64,{base64_data_str}"
-                        
-                        container_control.content = ft.Image(
-                            src=data_uri_string,
-                            fit=ft.BoxFit.COVER,      
-                            width=50,                  
-                            height=50,                 
-                            border_radius=25, 
-                            gapless_playback=True      
-                        )
-                        container_control.update()
-                        
-                await asyncio.sleep(0.01)
-                
-            except Exception as err:
-                print(f"Async image layout skip for {name}: {err}")
-
-
-    page.run_task(hydrate_player_avatars_async)
 
     list_view_box = ft.Container(
         content=ft.Row(
@@ -285,12 +253,12 @@ def generate_profile_tab(page: ft.Page, return_callback):
         expand=True,
         visible=True
     )
-    
+
     profile_details_box = ft.Container(expand=True, visible=False)
 
     master_profile_wrapper.content = ft.Column(
         expand=True,
         controls=[list_view_box, profile_details_box]
     )
-    
+
     return master_profile_wrapper

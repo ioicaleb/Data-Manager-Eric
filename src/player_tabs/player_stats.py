@@ -42,7 +42,7 @@ def generate_player_stats(player_stats_data):
         voter_container =  ft.Container(
             content=ft.Column(
                 controls=[
-                    ft.Text(f"🎵 {song_data.get('name', 'Unknown Track')}", size=24, weight=ft.FontWeight.W_600, color="purple100"),
+                    ft.Text(f"🎵 {song_data.get('name', 'Unknown Track')}", size=24, weight=ft.FontWeight.W_600),
                     ft.Text(f"Artist: {song_data.get('artist', 'Unknown')}   |   Album: {song_data.get('album', 'Unknown')}", size=18, color=ft.Colors.GREY_400),
                     ft.Text(f"Comment: {song_data.get('user_comment', 'Unknown')}", size=18) if song_data.get('user_comment') else None, 
                     ft.Text(f"Total Votes: {song_data.get('votes', 0)} pts", size=18, weight=ft.FontWeight.W_500),
@@ -121,7 +121,7 @@ def generate_player_stats(player_stats_data):
 
     best_round = player_stats_data.get("best_round", {})
     round_score = best_round.get("score", 0)
-    round_id = best_round.get("round_id", "?")
+    round_number = best_round.get("round_number", "?")
 
     best_round_songs_column = ft.Column(spacing=10)
     for song_id in best_round.get("songs", []):
@@ -133,8 +133,8 @@ def generate_player_stats(player_stats_data):
         content=ft.Column(
             controls=[
                 ft.Row([
-                    ft.Icon(ft.Icons.ALBUM, color=ft.Colors.AMBER_400),
-                    ft.Text(f"Best Round Performance: Round {round_id} — {best_round.get('title', 'Unknown Title')}", size=20, weight=ft.FontWeight.BOLD),
+                    ft.Icon(ft.Icons.ALBUM),
+                    ft.Text(f"Best Round Performance: Round {round_number} — {best_round.get('title', 'Unknown Title')}", size=20, weight=ft.FontWeight.BOLD),
                 ]),
                 ft.Text(f"Score: {round_score} Points", size=16, weight=ft.FontWeight.W_600, color=ft.Colors.BLUE_400),
                 ft.Container(content=best_round_songs_column, margin=ft.Margin(20, 5, 0, 0))

@@ -23,7 +23,6 @@ from tabs.song_check import generate_songs_tab
 from data_processing.cache_manager import initialize_memory_cache
 from data_processing.search_processor import clear_search_processor_globals, init_search_cache
 from data_processing.cache_builder import build_static_dashboard_cache
-from data_processing.data_processor import save_app_data
 from data_collection.data_collector import run_pipeline_migration
 
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -39,8 +38,7 @@ CREATE TABLE IF NOT EXISTS music_leagues (
     league_id VARCHAR(255) PRIMARY KEY,
     admin_password_hash VARCHAR(255),
     browser_type VARCHAR(50),
-    scraped_data JSONB,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    scraped_data JSONB
 );
 """
 
@@ -50,11 +48,7 @@ conn.commit()
 
 cur.close()
 conn.close()
-print("Database schema successfully generated!")
-
-
-
-
+print("Database successfully generated!")
 
 def get_league_data_from_postgres(league_id: str) -> dict:
     """Safely retrieves the raw data dictionary from your Render PostgreSQL instance."""
@@ -117,8 +111,22 @@ def verify_admin_password_hash(league_id: str, submitted_password_hash: str) -> 
         return False
     return True
 
-def main_dashboard(page: ft.Page, start_tab_index=0): 
-    """Your original visual layout manager. Renders analytics from active memory cache."""
+async def main_dashboard(page: ft.Page, start_tab_index=0, progress_callback=None):
+    """Your original visual layout manager. Renders analytics from active memory cache.
+
+    This is async (must be awaited) so it can await generate_profile_tab and
+    actually yield to the event loop between progress updates — see the
+    docstring on generate_profile_tab for why that matters.
+
+    progress_callback, if provided, is called as (fraction: float, message: str)
+    while the dashboard's tabs — especially player profiles, the slowest one —
+    are being built, so a loading screen can stay up and show what's happening.
+    """
+    async def _report(fraction: float, message: str):
+        if progress_callback:
+            progress_callback(fraction, message)
+        await asyncio.sleep(0)
+
     page.title = "Eric the Data Manager"
     page.theme_mode = ft.ThemeMode.DARK
     page.horizontal_alignment = ft.CrossAxisAlignment.START
@@ -139,15 +147,30 @@ def main_dashboard(page: ft.Page, start_tab_index=0):
         tooltip="Toggle theme"
     )
 
-    def return_callback(page_obj):
+    async def return_callback(page_obj):
         page_obj.controls.clear()
-        main_dashboard(page_obj, start_tab_index=2)
+        await main_dashboard(page_obj, start_tab_index=2)
     
+    await _report(0.05, "Building standings...")
     standings_container = generate_standings_tab(page)
+
+    await _report(0.15, "Building vote matrix...")
     matrix_container = generate_matrix_tab(page)
-    
+
     try:
-        profiles_container = generate_profile_tab(page, lambda p: return_callback(p))
+        def _profile_progress(fraction: float, message: str):
+            # Player profiles are the slowest tab to build (avatar downloads +
+            # every stat view for every player), so it gets the largest share
+            # of the remaining progress range. generate_profile_tab already
+            # yields to the event loop after calling this, so this just needs
+            # to forward the scaled value up to the loading screen.
+            progress_callback(0.20 + fraction * 0.60, message)
+
+        profiles_container = await generate_profile_tab(
+            page,
+            return_callback,
+            progress_callback=_profile_progress if progress_callback else None
+        )
         if profiles_container is None:
             raise ValueError("Profile tab function returned None value string configuration.")
     except Exception as e:
@@ -157,9 +180,13 @@ def main_dashboard(page: ft.Page, start_tab_index=0):
             padding=20
         )
 
+    await _report(0.85, "Building round stats...")
     rounds_container = generate_rounds_tab(page)
+
+    await _report(0.93, "Building song checker...")
     songs_container = generate_songs_tab(page)
 
+    await _report(0.98, "Assembling...")
 
     tab_view = ft.Tabs(
         length=5,
@@ -191,6 +218,8 @@ def main_dashboard(page: ft.Page, start_tab_index=0):
         )
     )
 
+    await _report(1.0, "Done! Launching...")
+    page.controls.clear()
     page.add(
         ft.Column(
             expand=True,
@@ -310,7 +339,7 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
         mapping_rows.controls.append(new_row)
         page.update()
 
-    def handle_save_and_sync(e):
+    async def handle_save_and_sync(e):
         compiled_username_map = {}
         new_players_list = payload.get("players") or []
         
@@ -336,7 +365,6 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
         initialize_memory_cache(payload)
         build_static_dashboard_cache(payload)
         init_search_cache()
-        save_app_data()
 
         save_league_data_to_postgres(
             league_id=league_id,
@@ -348,10 +376,9 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
         page.controls.clear()
         page.horizontal_alignment = ft.CrossAxisAlignment.START
         page.vertical_alignment = ft.MainAxisAlignment.START
-        main_dashboard(page)
-        page.update()
+        await main_dashboard(page)
 
-    def handle_skip_wizards(e):
+    async def handle_skip_wizards(e):
         if not payload.get("username_mapping"):
             payload["username_mapping"] = {u: u for u in scraped_users}
             
@@ -362,8 +389,7 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
         page.controls.clear()
         page.horizontal_alignment = ft.CrossAxisAlignment.START
         page.vertical_alignment = ft.MainAxisAlignment.START
-        main_dashboard(page)
-        page.update()
+        await main_dashboard(page)
 
     wizard_panel = ft.Container(
         width=720,
@@ -388,7 +414,7 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
                         ft.TextButton(
                             "Skip", 
                             icon=ft.Icons.SKIP_NEXT, 
-                            on_click=handle_skip_wizards,
+                            on_click=lambda e: page.run_task(handle_skip_wizards, e),
                             style=ft.ButtonStyle(color="grey500")
                         ),
                         ft.Row([
@@ -402,7 +428,7 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
                             ft.ElevatedButton(
                                 "Save", 
                                 icon=ft.Icons.CHECK_CIRCLE, 
-                                on_click=handle_save_and_sync, 
+                                on_click=lambda e: page.run_task(handle_save_and_sync, e), 
                                 bgcolor="green700", 
                                 color="white"
                             )
@@ -419,12 +445,6 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
 
 async def loading_gateway(page: ft.Page):
     """The central gateway layout that enables players to access stats and admins to run setups."""
-    page.fonts = {
-        "Oregano": "/Oregano-Regular.ttf"
-    }
-    page.theme = ft.Theme(font_family="Oregano")
-    page.font_family = "Oregano"
-    page.window.icon = "/app_logo.png"
     page.update()
     page.title = "Eric the Data Manager Portal"
     page.theme_mode = ft.ThemeMode.DARK
@@ -476,7 +496,7 @@ async def loading_gateway(page: ft.Page):
         hashed_pwd = hashlib.sha256(pwd.encode()).hexdigest() if pwd else ""
         
         if is_admin_mode and (not pwd):
-            error_text.value = "Error: Admin Password is required to trigger a scrape task."
+            error_text.value = "Error: Admin Password is required to scrape for data."
             page.update() 
             return
 
@@ -487,7 +507,7 @@ async def loading_gateway(page: ft.Page):
         
         try:
             progress_bar.value = 0.15
-            status_text.value = "Contacting Render PostgreSQL instance..."
+            status_text.value = "Contacting databse..."
             page.update() 
             
             await asyncio.to_thread(clear_search_processor_globals)
@@ -525,7 +545,7 @@ async def loading_gateway(page: ft.Page):
                 db_cache_payload = updated_payload
 
             if not db_cache_payload or (not db_cache_payload.get("rounds") and not db_cache_payload.get("players")):
-                raise ValueError("Specified League ID has no parsed history. An Admin must run a Force Crawl first.")
+                raise ValueError("Specified League ID has no parsed history. An Admin must scrape league data first.")
 
             username_map = db_cache_payload.get("username_mapping", {})
             scraped_usernames = db_cache_payload.get("avatars", {}).keys() 
@@ -552,18 +572,20 @@ async def loading_gateway(page: ft.Page):
             
             await asyncio.to_thread(build_static_dashboard_cache, db_cache_payload)
             await asyncio.to_thread(init_search_cache)
-            await asyncio.to_thread(save_app_data)
 
-            progress_bar.value = 1.0
-            status_text.value = "Done! Launching dashboard analytics..."
-            page.update() 
-            
+            progress_bar.value = 0.9
+            status_text.value = "Rendering dashboard — building player profiles takes a bit longer..."
+            page.update()
+
+            def _dashboard_progress(fraction: float, message: str):
+                progress_bar.value = min(0.99, 0.9 + fraction * 0.1)
+                status_text.value = message
+                page.update()
+
             page.horizontal_alignment = ft.CrossAxisAlignment.START
             page.vertical_alignment = ft.MainAxisAlignment.START
-            page.controls.clear()
-            
-            main_dashboard(page)
-            page.update() 
+
+            await main_dashboard(page, progress_callback=_dashboard_progress)
             
         except ValueError as val_ex:
             print(f"Gateway pipeline warning: {val_ex}")
@@ -698,4 +720,3 @@ async def proxy_avatar(url: str):
     if base64_data:
         return {"base64_data": base64_data}
     return {"error": "Failed to fetch remote asset image data"}
-

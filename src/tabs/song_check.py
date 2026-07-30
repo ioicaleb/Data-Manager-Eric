@@ -54,10 +54,10 @@ def generate_songs_tab(page: ft.Page):
             
             round_item = find_round_by_song_id(song.get("id"))
             if round_item:
-                round_id = round_item.get("id", "?")
+                round_number = round_item.get("id", "?")
                 round_title = round_item.get("title", "Unknown Round")
             else:
-                round_id = "?"
+                round_number = "?"
                 round_title = "Unassigned Round"
 
             song_card = ft.Container(
@@ -77,7 +77,7 @@ def generate_songs_tab(page: ft.Page):
                                 ft.Column([ft.Row([ft.Icon(ft.Icons.MIC, size=20, color="purple200"), ft.Text(f"Artist: {artist}", size=15)])], col={"lg": 3, "md": 6, "sm": 12}),
                                 ft.Column([ft.Row([ft.Icon(ft.Icons.ALBUM, size=20, color="purple200"), ft.Text(f"Album: {album}", size=15)])], col={"lg": 3, "md": 6, "sm": 12}),
                                 ft.Column([ft.Row([ft.Icon(ft.Icons.PERSON, size=20, color="amber200"), ft.Text(f"Submitted By: {player}", size=15)])], col={"lg": 3, "md": 6, "sm": 12}),
-                                ft.Column([ft.Row([ft.Icon(ft.Icons.PLAYLIST_PLAY, size=20, color="greenAccent200"), ft.Text(f"Round {round_id}: {round_title}", size=15)])], col={"lg": 3, "md": 6, "sm": 12}),
+                                ft.Column([ft.Row([ft.Icon(ft.Icons.PLAYLIST_PLAY, size=20, color="greenAccent200"), ft.Text(f"Round {round_number}: {round_title}", size=15)])], col={"lg": 3, "md": 6, "sm": 12}),
                             ]
                         ),
                         

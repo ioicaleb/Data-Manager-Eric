@@ -140,13 +140,6 @@ def process_standings_comments():
     
     return data
 
-def save_app_data():
-    current_time = datetime.datetime.now()
-    app_data = {
-        "date": current_time.isoformat()
-    }
-    write_json("app_data", app_data)
-
 def prepare_master_matrix():
     data = []
     players_data = get_players() or []
@@ -176,15 +169,15 @@ def prepare_player_round_info(player):
 
     for round_obj in rounds:
         round_data = {}
-        round_id = round_obj.get('round_number')
+        round_number = round_obj.get('round_number')
         
-        round_data[round_id] = {
-            "title": round_obj.get("title", f"Round {round_id}"),
+        round_data[round_number] = {
+            "title": round_obj.get("title", f"Round {round_number}"),
             "songs": []
         }
         for song in songs:
             if song.get("id") in round_obj.get("submissions", []):
-                round_data[round_id]["songs"].append(song)
+                round_data[round_number]["songs"].append(song)
         data.append(round_data)
     return data
 

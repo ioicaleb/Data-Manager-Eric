@@ -24,14 +24,14 @@ def generate_votes_to(player_stats_data):
     else:
         iterations = votes_to_data if votes_to_data else []
 
-    iterations = sorted(iterations, key = lambda x: x['round_id'])
+    iterations = sorted(iterations, key = lambda x: x['round_number'])
 
     for vote_round_item in iterations:
         if isinstance(vote_round_item, dict) and vote_round_item.get("songs"):
             vote_round_block = ft.Column(
                 controls=[
                     ft.Text(
-                        f"Round {vote_round_item.get('round_id', '?')} — {vote_round_item.get('title', 'Unknown Overview')}:", 
+                        f"Round {vote_round_item.get('round_number', '?')} — {vote_round_item.get('title', 'Unknown Overview')}:", 
                         size=22, 
                         weight=ft.FontWeight.BOLD,
                         color="purple100"
