@@ -118,7 +118,7 @@ def new_round_check(config):
     current_avatars = get_avatar_cache()
 
     if songs and players:
-        updated_results = check_for_new_rounds(config, results=results)
+        updated_results = get_results(config = config, results=results)
         
         if updated_results != results:
             results = updated_results
