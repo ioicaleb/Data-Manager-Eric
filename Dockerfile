@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install geckodriver explicitly (firefox-esr has no matching apt driver package,
 # so it must be downloaded and pinned manually — unlike chromium-driver above)
-ARG GECKODRIVER_VERSION=0.35.0
+ARG GECKODRIVER_VERSION=0.37.1
 RUN curl -sSL "https://github.com/mozilla/geckodriver/releases/download/v${GECKODRIVER_VERSION}/geckodriver-v${GECKODRIVER_VERSION}-linux64.tar.gz" \
     | tar xz -C /usr/local/bin/ \
     && chmod +x /usr/local/bin/geckodriver
