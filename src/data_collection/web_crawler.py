@@ -126,8 +126,6 @@ def get_all_rounds(driver, config):
     Retrieve all completed rounds from the main page.
     """
     rounds = []
-    if driver is None:
-        print(f"get_all_rounds")
     
     soup = BeautifulSoup(driver.page_source, "html.parser")
     status_pattern = re.compile(r"status:\s*'COMPLETE'")
@@ -165,11 +163,8 @@ def check_for_new_rounds(config, results=None):
     Check for and retrieve new rounds since the last known round in the database.
     """
     round_number = int(results[-1]["round_number"])
-    print("checking for new rounds driver")
     try:
-        driver = setup_authenticated_driver(config)        
-        if driver is None:
-                print(f"check_for_new_rounds")
+        driver = setup_authenticated_driver(config)
         driver.get(f"https://app.musicleague.com/l/{config.get('league_id')}")
         rounds_list = driver.current_url
         recent_round = get_recent_round_number(driver)
@@ -184,10 +179,7 @@ def check_for_new_rounds(config, results=None):
             print("No new rounds detected.")
             return results
     finally:
-        if driver is None:
-                print("finally")
-        else:
-            driver.quit()
+        driver.quit()
 
 def get_recent_round_number(driver):
     """
@@ -287,7 +279,6 @@ def setup_authenticated_driver(config: dict):
     across all musicleague subdomains before data collection queries trigger.
     """
     browser_type = config.get("browser_type", "chromium")
-    print(f"authenticating driver")
     if browser_type == "firefox":
         try:
             profile_path = get_firefox_profile_path()
@@ -314,16 +305,13 @@ def setup_authenticated_driver(config: dict):
 
     if driver is None:
         print("setup_authenticated_driver")
-    
+    else:
+        print("driver authenticated")
     time.sleep(1)
     return driver
         
 def get_results(config, results = {}):
-    driver = None
-    print(f"results_driver: {driver}")
     driver = setup_authenticated_driver(config)
-    if driver is None:
-        print(f"get_results")
     target_url = f"https://app.musicleague.com/l/{config.get('league_id')}/"
     driver.get(target_url)
     time.sleep(1)
