@@ -161,7 +161,7 @@ def check_for_new_rounds(config, results=None):
     """
     Check for and retrieve new rounds since the last known round in the database.
     """
-    round_number = int(results[-1]["id"])
+    round_number = int(results[-1]["round_number"])
     try:
         driver = setup_authenticated_driver(config)        
         driver.get(f"https://app.musicleague.com/l/{config.get('league_id')}")
@@ -214,7 +214,7 @@ def get_missing_rounds(driver, config, missing_rounds, existing_rounds_cache):
     Get specific missing rounds using state arrays injected from Postgres.
     """
     rounds = existing_rounds_cache if existing_rounds_cache else []
-    if rounds[0].get("id") == 0:
+    if rounds[0].get("round_number") == 0:
         rounds = []
     time.sleep(5)
     
