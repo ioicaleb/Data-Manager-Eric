@@ -288,11 +288,11 @@ def setup_authenticated_driver(config: dict):
 
         try:
             profile_path = get_firefox_profile_path()
-            options.profile = FirefoxProfile(profile_path)
         except Exception as e:
             print(f"No local Firefox profile found (expected in Docker) — continuing headless without one: {e}")
 
-        service = FirefoxService(executable_path="/usr/local/bin/geckodriver", log_output=sys.stdout)
+        from webdriver_manager.firefox import GeckoDriverManager
+        service = FirefoxService(GeckoDriverManager().install())
         driver = webdriver.Firefox(options=options, service=service)
     else:
         user_data_path = get_chrome_user_data_dir()
