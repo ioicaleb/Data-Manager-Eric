@@ -327,7 +327,7 @@ def get_results(config, results = None):
         driver.get(target_url)
         time.sleep(1)
         if results:
-            return check_for_new_rounds(driver, config, results=results)
+            return check_for_new_rounds(driver = driver, config = config, results=results)
         else:
             return get_all_rounds(driver, config)     
     except Exception as e:
