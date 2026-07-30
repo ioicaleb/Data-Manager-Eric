@@ -166,8 +166,6 @@ def check_for_new_rounds(config, results=None):
     """
     round_number = int(results[-1]["round_number"])
     print("checking for new rounds driver")
-    driver = None
-    print(f"driver: {driver}")
     try:
         driver = setup_authenticated_driver(config)        
         if driver is None:
@@ -289,8 +287,7 @@ def setup_authenticated_driver(config: dict):
     across all musicleague subdomains before data collection queries trigger.
     """
     browser_type = config.get("browser_type", "chromium")
-    driver = None
-    print(f"authenticated driver: {driver}")
+    print(f"authenticating driver")
     if browser_type == "firefox":
         try:
             profile_path = get_firefox_profile_path()
