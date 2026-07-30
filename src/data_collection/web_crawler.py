@@ -16,6 +16,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
+from selenium.webdriver.firefox.service import Service as FirefoxService
 
 _global_avatar_cache = {}
 
@@ -177,11 +178,8 @@ def check_for_new_rounds( config, results=None, driver = None):
         else:
             print("No new rounds detected.")
             return results
-    except Exception as e:
-            import traceback
-            print(f"Critical execution error in check_for_new_round block: {e}")
-            traceback.print_exc()
-            return results
+    finally:
+        driver.quit()
 
 def get_recent_round_number(driver):
     """
@@ -279,16 +277,17 @@ def setup_authenticated_driver(config: dict):
     """
     browser_type = config.get("browser_type", "chromium")
     if browser_type == "firefox":
+        options = FirefoxOptions()
+        options.add_argument("-headless")
+
         try:
             profile_path = get_firefox_profile_path()
-            safe_profile = FirefoxProfile(profile_path)
-            options = FirefoxOptions()
-            options.add_argument("-headless")
-            options.profile = safe_profile
-        except Exception:
-            options = FirefoxOptions()
-            
-        driver = webdriver.Firefox(options=options)
+            options.profile = FirefoxProfile(profile_path)
+        except Exception as e:
+            print(f"No local Firefox profile found (expected in Docker) — continuing headless without one: {e}")
+
+        service = FirefoxService(executable_path="/usr/local/bin/geckodriver", log_output=sys.stdout)
+        driver = webdriver.Firefox(options=options, service=service)
     else:
         user_data_path = get_chrome_user_data_dir()
         options = ChromeOptions()
@@ -322,13 +321,11 @@ def get_results(config, results = None):
         driver.get(target_url)
         time.sleep(1)
         if results:
-            return check_for_new_rounds(driver = driver, config = config, results=results)
+            return check_for_new_rounds(driver, config, results=results)
         else:
             return get_all_rounds(driver, config)     
     except Exception as e:
-        import traceback
         print(f"Critical execution error in get_results block: {e}")
-        traceback.print_exc()
         return results
         
     finally:
