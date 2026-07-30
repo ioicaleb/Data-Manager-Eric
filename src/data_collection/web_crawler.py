@@ -51,7 +51,7 @@ def get_round_results(driver, config):
     """
     players = config.get("username-player_name")
     if driver is None:
-        print("get_round_results")
+        print(f"get_round_results")
     try:
         soup = BeautifulSoup(driver.page_source, "html.parser")
         for element in soup.find_all(string=True):
@@ -127,7 +127,7 @@ def get_all_rounds(driver, config):
     """
     rounds = []
     if driver is None:
-            print("get_all_rounds")
+        print(f"get_all_rounds")
     
     soup = BeautifulSoup(driver.page_source, "html.parser")
     status_pattern = re.compile(r"status:\s*'COMPLETE'")
@@ -165,10 +165,12 @@ def check_for_new_rounds(config, results=None):
     Check for and retrieve new rounds since the last known round in the database.
     """
     round_number = int(results[-1]["round_number"])
+    driver = None
+    print(f"driver: {driver}")
     try:
         driver = setup_authenticated_driver(config)        
         if driver is None:
-                print("check_for_new_rounds")
+                print(f"check_for_new_rounds")
         driver.get(f"https://app.musicleague.com/l/{config.get('league_id')}")
         rounds_list = driver.current_url
         recent_round = get_recent_round_number(driver)
@@ -285,6 +287,8 @@ def setup_authenticated_driver(config: dict):
     across all musicleague subdomains before data collection queries trigger.
     """
     browser_type = config.get("browser_type", "chromium")
+    driver = None
+    print(f"authenticated driver: {driver}")
     if browser_type == "firefox":
         try:
             profile_path = get_firefox_profile_path()
@@ -310,7 +314,7 @@ def setup_authenticated_driver(config: dict):
         driver = webdriver.Chrome(options=options)
 
     if driver is None:
-            print("setup_authenticated_driver")
+        print("setup_authenticated_driver")
     
     time.sleep(1)
     return driver
