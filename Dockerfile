@@ -28,6 +28,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
+# Install geckodriver explicitly (firefox-esr has no matching apt driver package,
+# so it must be downloaded and pinned manually — unlike chromium-driver above)
+ARG GECKODRIVER_VERSION=0.35.0
+RUN curl -sSL "https://github.com/mozilla/geckodriver/releases/download/v${GECKODRIVER_VERSION}/geckodriver-v${GECKODRIVER_VERSION}-linux64.tar.gz" \
+    | tar xz -C /usr/local/bin/ \
+    && chmod +x /usr/local/bin/geckodriver
+
 # Find the exact installed path for WebDrivers and add them to the system PATH environment
 ENV PATH="/usr/bin:/usr/local/bin:${PATH}"
 
