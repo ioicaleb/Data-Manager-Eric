@@ -165,6 +165,7 @@ def check_for_new_rounds(config, results=None):
     Check for and retrieve new rounds since the last known round in the database.
     """
     round_number = int(results[-1]["round_number"])
+    print("checking for new rounds driver")
     driver = None
     print(f"driver: {driver}")
     try:
@@ -187,7 +188,8 @@ def check_for_new_rounds(config, results=None):
     finally:
         if driver is None:
                 print("finally")
-        driver.quit()
+        else:
+            driver.quit()
 
 def get_recent_round_number(driver):
     """
@@ -320,9 +322,11 @@ def setup_authenticated_driver(config: dict):
     return driver
         
 def get_results(config, results = {}):
+    driver = None
+    print(f"results_driver: {driver}")
     driver = setup_authenticated_driver(config)
     if driver is None:
-        print("get_results")
+        print(f"get_results")
     target_url = f"https://app.musicleague.com/l/{config.get('league_id')}/"
     driver.get(target_url)
     time.sleep(1)
