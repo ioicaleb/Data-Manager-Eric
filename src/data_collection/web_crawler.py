@@ -279,7 +279,12 @@ def setup_authenticated_driver(config: dict):
     if browser_type == "firefox":
         options = FirefoxOptions()
         options.add_argument("-headless")
+        os.environ["MOZ_DISABLE_CONTENT_SANDBOX"] = "1"
         options.set_preference("security.sandbox.content.level", 0)
+        options.set_preference("dom.ipc.processCount", 1)
+        options.set_preference("browser.tabs.remote.autostart", False)
+        options.set_preference("layers.acceleration.disabled", True)
+        options.set_preference("gfx.webrender.all", False)
 
         try:
             profile_path = get_firefox_profile_path()
