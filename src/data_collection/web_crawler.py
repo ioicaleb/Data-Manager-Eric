@@ -50,8 +50,6 @@ def get_round_results(driver, config):
     Extract round information from a single round page.
     """
     players = config.get("username-player_name")
-    if driver is None:
-        print(f"get_round_results")
     try:
         soup = BeautifulSoup(driver.page_source, "html.parser")
         for element in soup.find_all(string=True):
@@ -187,8 +185,6 @@ def get_recent_round_number(driver):
     """
     round_number = 0
     time.sleep(2)
-    if driver is None:
-        print("get_recent_round_number")
     try:
         soup = BeautifulSoup(driver.page_source, "html.parser")
         status_pattern = re.compile(r"status:\s*'COMPLETE'")
@@ -220,9 +216,6 @@ def get_missing_rounds(driver, config, missing_rounds, existing_rounds_cache):
     if rounds[0].get("round_number") == 0:
         rounds = []
     time.sleep(5)
-
-    if driver is None:
-            print("get_missing_round")
     
     soup = BeautifulSoup(driver.page_source, "html.parser")
     status_pattern = re.compile(r"status:\s*'COMPLETE'")
@@ -304,9 +297,9 @@ def setup_authenticated_driver(config: dict):
         driver = webdriver.Chrome(options=options)
 
     if driver is None:
-        print("setup_authenticated_driver")
+        print("Driver failed")
     else:
-        print("driver authenticated")
+        print("Driver Authenticated")
     time.sleep(1)
     return driver
         
@@ -323,18 +316,15 @@ def get_results(config, results = None):
         driver.get(target_url)
         time.sleep(1)
         if results:
-                print("Historical context present. Evaluating for partial delta sync updates...")
-                return check_for_new_rounds(driver, config, results=results)
+            return check_for_new_rounds(driver, config, results=results)
         else:
-            print("No cached data discovered. Initiating comprehensive global full data scrape...")
             return get_all_rounds(driver, config)     
     except Exception as e:
-        print(f"Critical execution error encountered inside top-level get_results block: {e}")
+        print(f"Critical execution error in get_results block: {e}")
         return results
         
     finally:
         if driver is not None:
-            print("Terminating active automation browser window workers...")
             try:
                 driver.quit()
             except Exception as e:

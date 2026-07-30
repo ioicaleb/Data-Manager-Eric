@@ -18,6 +18,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium \
     chromium-driver \
     firefox-esr \
+    libgtk-3-0 \
+    libdbus-glib-1-2 \
+    libxt6 \
+    libasound2 \
+    libx11-xcb1 \
+    libgbm1 \
+    libnss3 \
+    fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
 # Find the exact installed path for WebDrivers and add them to the system PATH environment
