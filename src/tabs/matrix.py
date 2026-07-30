@@ -64,7 +64,7 @@ def generate_matrix_tab(page: ft.Page):
 
         if isinstance(players_data, dict):
             for name in players_data.keys():
-                if name == "[Left the league]":
+                if name == "[Left the league]" or name == "":
                     continue
                 player_keys.append(name)
                 matrix_table.columns.append(
@@ -78,7 +78,7 @@ def generate_matrix_tab(page: ft.Page):
                 )
         elif isinstance(players_data, list):
             for player in players_data:
-                if isinstance(player, dict) and player.get("name") != "[Left the league]":
+                if isinstance(player, dict) and player.get("name") and player.get("name") != "[Left the league]":
                     name = player.get("name", "Unknown")
                     player_keys.append(name)
                     matrix_table.columns.append(

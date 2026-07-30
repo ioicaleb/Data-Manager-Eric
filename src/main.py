@@ -14,7 +14,7 @@ if PROJECT_ROOT not in sys.path:
 if CURRENT_DIR not in sys.path:
     sys.path.insert(0, CURRENT_DIR)
 
-from tabs.player_stats import generate_profile_tab
+from tabs.profile_stats import generate_profile_tab
 from tabs.matrix import generate_matrix_tab
 from tabs.standings import generate_standings_tab
 from tabs.rounds import generate_rounds_tab
@@ -171,7 +171,7 @@ async def main_dashboard(page: ft.Page, start_tab_index=0, progress_callback=Non
     except Exception as e:
         print(f"Warning: profiles_container failed to initialize: {e}")
         profiles_container = ft.Container(
-            content=ft.Text(f"Profiles tab initialization error: {str(e)}", color="amber700"),
+            content=ft.Text(f"Profiles tab initialization error: {str(e)}"),
             padding=20
         )
 
@@ -188,7 +188,7 @@ async def main_dashboard(page: ft.Page, start_tab_index=0, progress_callback=Non
     tab_view = ft.Tabs(
         length=5,
         selected_index=start_tab_index,
-        expand=True,
+        expand=False,
         content=ft.Column(
             expand=True,
             controls=[
@@ -302,7 +302,6 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
 
     def build_mapping_row(username: str, prefill_value: str = ""):
         row_is_mobile = (page.width or 1200) < 700
-
         input_field = ft.TextField(
             label="Preferred Display Name",
             value=prefill_value or username,
@@ -311,7 +310,7 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
             hint_text="e.g., Eric S."
         )
         text_fields_registry[username] = input_field
-
+        
         if row_is_mobile:
             content = ft.Column(
                 spacing=8,
@@ -325,7 +324,7 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
             )
         else:
             content = ft.Row(
-                controls=[
+                controls= [
                     ft.Icon(ft.Icons.PERSON_OUTLINE, color="purple"),
                     ft.Text(username, size=20, weight=ft.FontWeight.BOLD, width=200),
                     ft.Icon(ft.Icons.ARROW_FORWARD, color="grey600"),
@@ -333,7 +332,6 @@ def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, p
                 ],
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN
             )
-
         return ft.Container(
             padding=10,
             border_radius=8,
@@ -675,7 +673,7 @@ async def loading_gateway(page: ft.Page):
                     alignment=ft.MainAxisAlignment.CENTER,
                     controls=[
                         ft.Container(
-                            col={"xs": 12, "sm": 12, "md": 5, "lg": 4},
+                            col={"xs": 12, "sm": 12, "md": 6, "lg": 5},
                             content=ft.Card(
                                 content=ft.Container(
                                     padding=20,
@@ -693,34 +691,37 @@ async def loading_gateway(page: ft.Page):
                                     ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
                                 )
                             )
-                        ),
-
-                        ft.Container(
-                            col={"xs": 12, "sm": 12, "md": 6, "lg": 5},
-                            content=ft.Card(
-                                content=ft.Container(
-                                    padding=20,
-                                    content=ft.Column([
-                                        ft.Text("🛠️ Admin Panel", size=20, weight=ft.FontWeight.BOLD),
-                                        ft.Text("Initialize new leagues or get results of new rounds.", size=16, color="grey"),
-                                        admin_password_field,
-                                        browser_dropdown,
-                                        ft.ElevatedButton(
-                                            "Sync Data",
-                                            on_click=lambda e: page.run_task(execute_portal_pipeline, True),
-                                            icon=ft.Icons.RUN_CIRCLE,
-                                            bgcolor="amber700",
-                                            color="white"
-                                        )
-                                    ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10)
-                                )
-                            )
                         )
                     ]
+                ),
+
+                ft.Container(
+                    col={"xs": 12, "sm": 12, "md": 6, "lg": 5},
+                    content=ft.Card(
+                        content=ft.Container(
+                            padding=20,
+                            content=ft.Column(
+                                [
+                                    ft.Text("🛠️ Admin Panel", size=20, weight=ft.FontWeight.BOLD),
+                                    ft.Text("Initialize new leagues or get results of new rounds.", size=16, color="grey"),
+                                    admin_password_field,
+                                    browser_dropdown,
+                                    ft.ElevatedButton(
+                                        "Sync Data",
+                                        on_click=lambda e: page.run_task(execute_portal_pipeline, True),
+                                        icon=ft.Icons.RUN_CIRCLE,
+                                        bgcolor="amber700",
+                                        color="white"
+                                    )
+                                ], 
+                                horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10
+                            )
+                        )
+                    )
                 )
             ]
         )
-    )
+    ) 
     page.update()
 
 root_project_directory = os.getcwd()
