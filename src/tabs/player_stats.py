@@ -8,7 +8,7 @@ from player_tabs.all_songs import generate_all_songs
 from player_tabs.round_songs import generate_round_songs
 from player_tabs.votes_from import generate_votes_from
 from player_tabs.votes_to import generate_votes_to
-from player_tabs.player_stats import generate_player_stats
+from player_tabs.profile_stats import generate_player_stats
 from player_tabs.votes_songs import generate_votes_songs
 
 
