@@ -313,8 +313,8 @@ def get_results(config, results = None):
     try:
         driver = setup_authenticated_driver(config)
         if not driver:
-                print("Aborting collection pipeline run: Driver failed authentication allocation.")
-                return results
+            print("Aborting collection pipeline run: Driver failed authentication allocation.")
+            return results
         target_url = f"https://app.musicleague.com/l/{config.get('league_id')}/"
         driver.get(target_url)
         time.sleep(1)

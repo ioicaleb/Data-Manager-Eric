@@ -118,16 +118,25 @@ def new_round_check(config):
     current_avatars = get_avatar_cache()
 
     if songs and players:
-        updated_results = get_results(config = config, results=results)
-        
-        if updated_results != results:
-            results = updated_results
-            songs = export_songs(results)
-            players = export_players(results, current_avatars)
+        try:
+            updated_results = get_results(config = config, results=results)
+            
+            # Guard against get_results completely failing/returning empty arrays 
+            if updated_results and updated_results != results:
+                results = updated_results
+                songs = export_songs(results)
+                players = export_players(results, current_avatars)
+            elif not updated_results:
+                print("Warning: Delta update returned zero results. Retaining existing database cache.")
+                
+        except Exception as pipeline_err:
+            print(f"Gateway pipeline dropped cleanly during sync check: {pipeline_err}")
+            print("Falling back to local cached database records to keep the service running.")
         
     elif not songs:
         songs = export_songs(results)
         players = export_players(results, current_avatars)
         print("Initialized missing song/player state matrix data records")
     else:
+        players = export_players(results, current_avatars)
         players = export_players(results, current_avatars)
