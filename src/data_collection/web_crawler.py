@@ -228,14 +228,16 @@ def get_missing_rounds(driver, config, missing_rounds, existing_rounds_cache):
         anchors = [anchor.get('href') for anchor in elems[i].find_all("a", href=True)]
         if len(anchors) >= 3:
             links.append(f"https://app.musicleague.com{anchors[2]}")
-            
+
+    i = 0
     for link in links:
         driver.get(link)
         time.sleep(1)
         round_data = get_round_results(driver, config)
         if round_data:
+            i += 1
             rounds.append(round_data)
-            print(f"Got round {links.__len__() - round_data.round_number + 1} out of {links.__len__()}")
+            print(f"Got {i} out of {missing_rounds} rounds")
     return rounds
 
 def get_firefox_profile_path():
