@@ -156,12 +156,15 @@ def get_all_rounds(driver, config):
     print("Got all rounds")
     return rounds
 
-def check_for_new_rounds(driver, config, results=None):
+def check_for_new_rounds( config, results=None, driver = None):
     """
     Check for and retrieve new rounds since the last known round in the database.
     """
-    round_number = int(results[-1]["round_number"] if isinstance(results[-1], dict) else results[-1].round_number)
+    round_number = int(results[-1]["round_number"])
     try:
+        if driver is None:
+            driver = setup_authenticated_driver(config)
+            driver.get(f"https://app.musicleague.com/l/{config.get('league_id')}")
         rounds_list = driver.current_url
         recent_round = get_recent_round_number(driver)
         missing_rounds = recent_round - round_number
@@ -229,15 +232,15 @@ def get_missing_rounds(driver, config, missing_rounds, existing_rounds_cache):
         if len(anchors) >= 3:
             links.append(f"https://app.musicleague.com{anchors[2]}")
 
-    i = 0
+    i= 0
     for link in links:
         driver.get(link)
         time.sleep(1)
         round_data = get_round_results(driver, config)
         if round_data:
-            i += 1
             rounds.append(round_data)
-            print(f"Got {i} out of {missing_rounds} rounds")
+            i += 1
+            print(f"Got round {i} out of {missing_rounds}")
     return rounds
 
 def get_firefox_profile_path():
@@ -316,7 +319,7 @@ def get_results(config, results = None):
         driver.get(target_url)
         time.sleep(1)
         if results:
-            return check_for_new_rounds(driver = driver, config = config, results=results)
+            return check_for_new_rounds(driver, config, results=results)
         else:
             return get_all_rounds(driver, config)     
     except Exception as e:
