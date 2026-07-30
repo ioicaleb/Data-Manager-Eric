@@ -167,14 +167,14 @@ def check_for_new_rounds(config, results=None):
     round_number = int(results[-1]["round_number"])
     try:
         driver = setup_authenticated_driver(config)        
+        if driver is None:
+                print("check_for_new_rounds")
         driver.get(f"https://app.musicleague.com/l/{config.get('league_id')}")
         rounds_list = driver.current_url
         recent_round = get_recent_round_number(driver)
         missing_rounds = recent_round - round_number
         
         if missing_rounds > 0:
-            if driver is None:
-                    print("check_for_new_rounds")
             driver.get(rounds_list)
             print(f"Getting information for {missing_rounds} missing rounds")
             updated_rounds = get_missing_rounds(driver, config, missing_rounds, results)
@@ -193,6 +193,8 @@ def get_recent_round_number(driver):
     """
     round_number = 0
     time.sleep(2)
+    if driver is None:
+        print("get_recent_round_number")
     try:
         soup = BeautifulSoup(driver.page_source, "html.parser")
         status_pattern = re.compile(r"status:\s*'COMPLETE'")
@@ -315,12 +317,11 @@ def setup_authenticated_driver(config: dict):
         
 def get_results(config, results = {}):
     driver = setup_authenticated_driver(config)
-    
+    if driver is None:
+        print("get_results")
     target_url = f"https://app.musicleague.com/l/{config.get('league_id')}/"
     driver.get(target_url)
     time.sleep(1)
-    if driver is None:
-                print("get_results")
     if results:
         return check_for_new_rounds(driver=driver, config= config, results = results)
     else:
