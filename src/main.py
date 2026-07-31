@@ -485,15 +485,8 @@ async def loading_gateway(page: ft.Page):
 
     league_id_field = ft.TextField(label="Music League ID/URL", width=field_width, hint_text="e.g., 4a7b9...")
     admin_password_field = ft.TextField(label="Admin Password (Required for Scraping)", width=field_width, password=True, can_reveal_password=True)
-    session_cookie_field = ft.TextField(
-        label="Music League Session Cookie",
-        width=field_width,
-        password=True,
-        can_reveal_password=True,
-        hint_text="Paste from your browser's dev tools (Application > Cookies)"
-    )
     browser_dropdown = ft.Dropdown(
-        label="Browser Used for Scraping",
+        label="Browser Used for Login",
         value="chromium",
         width=field_width,
         options=[
@@ -507,6 +500,7 @@ async def loading_gateway(page: ft.Page):
     async def execute_portal_pipeline(is_admin_mode: bool):
         l_id = league_id_field.value.strip()
         pwd = admin_password_field.value.strip()
+        browser_type = browser_dropdown.value
         raw_id_input = league_id_field.value.strip()
         
         if not raw_id_input:
@@ -529,18 +523,12 @@ async def loading_gateway(page: ft.Page):
             return
             
         hashed_pwd = hashlib.sha256(pwd.encode()).hexdigest() if pwd else ""
-        session_cookie_value = session_cookie_field.value.strip() if session_cookie_field.value else ""
         
-        if is_admin_mode:
-            if not pwd:
-                error_text.value = "Error: Admin Password is required to scrape for data."
-                page.update() 
-                return
-            if not session_cookie_value:
-                error_text.value = "Error: Paste your Music League session cookie before running a Sync!"
-                error_text.color = "red"
-                page.update()
-                return
+        if is_admin_mode and (not pwd):
+            error_text.value = "Error: Admin Password is required to scrape for data."
+            page.update() 
+            return
+            
 
         main_menu_container.current.visible = False
         page.update() 
@@ -562,7 +550,7 @@ async def loading_gateway(page: ft.Page):
 
             if is_admin_mode or has_no_history:
                 progress_bar.value = 0.35
-                status_text.value = f"Verifying pipeline admin configuration rules..."
+                status_text.value = f"Opening Music League..."
                 page.update() 
                 
                 if db_cache_payload and db_cache_payload.get("admin_password_hash"):
@@ -570,11 +558,11 @@ async def loading_gateway(page: ft.Page):
                         raise ValueError("Admin Authentication Failed: Invalid secret key for this league ID.")
                 
                 progress_bar.value = 0.55
-                status_text.value = "Extracting league data..."
+                status_text.value = "Extracting league results..."
                 page.update() 
                 
                 updated_payload = await asyncio.to_thread(
-                    run_pipeline_migration, l_id, browser_dropdown.value, session_cookie_value, db_cache_payload or {}
+                    run_pipeline_migration, l_id, browser_type, db_cache_payload or {}
                 )
                 
                 progress_bar.value = 0.70
@@ -582,10 +570,26 @@ async def loading_gateway(page: ft.Page):
                 page.update() 
                 
                 await asyncio.to_thread(
-                    save_league_data_to_postgres, l_id, hashed_pwd, updated_payload, browser_dropdown.value
-                )
+                    save_league_data_to_postgres, l_id, hashed_pwd, updated_payload, browser_type
                 db_cache_payload = updated_payload
 
+            if not db_cache_payload or (not db_cache_payload.get("rounds") and not db_cache_payload.get("players")):
+                raise ValueError("Specified League ID has no parsed history. An Admin must scrape league data first.")
+
+            username_map = db_cache_payload.get("username_mapping", {})
+            scraped_usernames = db_cache_payload.get("avatars", {}).keys() 
+
+            has_unmapped = any(user not in username_map for user in scraped_usernames)
+            if (not username_map or has_unmapped) and is_admin_mode:
+                status_text.value = "Launching User Mapping Wizard..."
+                page.update()
+                
+                page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+                page.vertical_alignment = ft.MainAxisAlignment.CENTER
+                page.controls.clear()
+                
+                await show_username_mapping_wizard(page, db_cache_payload, l_id, hashed_pwd)
+                return
             progress_bar.value = 0.80
             status_text.value = "Initializing data storage..."
             page.update() 
@@ -611,42 +615,88 @@ async def loading_gateway(page: ft.Page):
             page.vertical_alignment = ft.MainAxisAlignment.START
 
             await main_dashboard(page, progress_callback=_dashboard_progress)
+
+        except ValueError as val_ex:
+            print(f"Gateway pipeline warning: {val_ex}")
+            page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+            page.vertical_alignment = ft.MainAxisAlignment.CENTER
+            page.controls.clear()
             
+            error_text.value = str(val_ex)
+            if main_menu_container.current is not None:
+                main_menu_container.current.visible = True
+                page.add(ft.Column(ref=main_menu_container, controls=page.controls)) 
+            else:
+                error_text.value = f"Warning: {str(val_ex)}"
+                page.add(
+                    ft.Column(
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=15,
+                        controls=[
+                            ft.Text(
+                                "🎵 Eric the Data Manager", 
+                                size=70,
+                                weight=ft.FontWeight.W_700
+                            ),
+                            ft.Text(
+                                "Music League Data Management", 
+                                size=21, 
+                                color="grey400"
+                            ),
+                            league_id_field,
+                            error_text,
+                            ft.ElevatedButton("Return to Main Menu", on_click=lambda _: page.go("/"))
+                        ]
+                    )
+                )
+            
+            page.snack_bar = ft.SnackBar(content=ft.Text(str(val_ex), color="white"), bgcolor="amber700")
+            page.snack_bar.open = True
+            page.update()
         except Exception as ex:
-            progress_bar.visible = False
-            status_text.visible = False
-            error_text.value = str(ex)
-            main_menu_container.current.visible = True
+            print(f"Gateway pipeline dropped: {ex}")
+            page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+            page.vertical_alignment = ft.MainAxisAlignment.CENTER
+            page.controls.clear()
+            page.add(
+                ft.Icon(ft.Icons.ERROR_OUTLINE, color=ft.Colors.RED, size=50),
+                ft.Text(f"System pipeline failure occurred:\n{str(ex)}", text_align=ft.TextAlign.CENTER, color=ft.Colors.RED, size=20),
+                ft.ElevatedButton("Return to Portal Gateway", on_click=lambda _: page.go("/"))
+            )
             page.update()
 
-    main_menu_container.current = ft.Column(
-        ref=main_menu_container,
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-        spacing=15,
-        scroll=ft.ScrollMode.HIDDEN,
-        controls=[
-            ft.Text("🎵 Eric the Data Manager", size=28 if is_mobile else 44, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
-            ft.Text("Music League Data Manager", size=16 if is_mobile else 20, color="grey400"),
-            ft.Container(height=10),
-            league_id_field,
-            error_text,
-            
-            ft.ResponsiveRow(
-                alignment=ft.MainAxisAlignment.CENTER,
-                controls=[
-                    ft.Container(
-                        col={"xs": 12, "sm": 12, "md": 6, "lg": 5},
-                        content=ft.Card(
-                            content=ft.Container(
-                                padding=20,
-                                content=ft.Column([
-                                    ft.Text("League Member Portal", size=20, weight=ft.FontWeight.BOLD),
-                                    ft.Text("View live leaderboards, vote matrices, track profiles, and round stats instantly.", size=18, color="grey"),
-                                    ft.Container(height=32),
-                                    ft.ElevatedButton("View Analytics",
-                                                      on_click=lambda e: page.run_task(execute_portal_pipeline, False),
-                                                      icon=ft.Icons.VIEW_AGENDA,bgcolor="blue700",color="white"
-                                                    )
+    page.add(
+        ft.Column(
+            ref=main_menu_container,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=15,
+            scroll= ft.ScrollMode.HIDDEN,
+            controls=[
+                ft.Text("🎵 Eric the Data Manager", size=28 if is_mobile else 44, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
+                ft.Text("Music League Data Manager", size=16 if is_mobile else 20, color="grey400"),
+                ft.Container(height=10),
+                league_id_field,
+                error_text,
+                
+                ft.ResponsiveRow(
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    controls=[
+                        ft.Container(
+                            col={"xs": 12, "sm": 12, "md": 6, "lg": 5},
+                            content=ft.Card(
+                                content=ft.Container(
+                                    padding=20,
+                                    content=ft.Column([
+                                        ft.Text("League Member Portal", size=20, weight=ft.FontWeight.BOLD),
+                                        ft.Text("View live leaderboards, vote matrices, track profiles, and round stats instantly.", size=18, color="grey"),
+                                        ft.Container(height=32),
+                                        ft.ElevatedButton(
+                                            "View Analytics",
+                                            on_click=lambda e: page.run_task(execute_portal_pipeline, False),
+                                            icon=ft.Icons.VIEW_AGENDA,
+                                            bgcolor="blue700",
+                                            color="white"
+                                        )
                                     ], 
                                     horizontal_alignment=ft.CrossAxisAlignment.CENTER)
                                 )
@@ -661,9 +711,7 @@ async def loading_gateway(page: ft.Page):
                                     ft.Text("🛠️ Admin Panel", size=20, weight=ft.FontWeight.BOLD),
                                     ft.Text("Initialize new leagues or pull results of new rounds.", size=16, color="grey"),
                                     admin_password_field,
-                                    session_cookie_field,
                                     browser_dropdown,
-                                    ft.Container(height=5),
                                     ft.ElevatedButton(
                                         "Sync Data",
                                         on_click=lambda e: page.run_task(execute_portal_pipeline, True),
@@ -682,12 +730,10 @@ async def loading_gateway(page: ft.Page):
             )
         ]
     )
-
-    page.add(main_menu_container.current)
+    page.update()
     
 root_project_directory = os.getcwd()
 production_assets_path = os.path.join(root_project_directory, "assets")
-
 app = flet_fastapi.app(loading_gateway, assets_dir=production_assets_path)
 
 def fetch_avatar_base64_raw(url: str) -> str:
@@ -705,7 +751,7 @@ def fetch_avatar_base64_raw(url: str) -> str:
     
 @app.get("/proxy-avatar")
 async def proxy_avatar(url: str):
-    base64_data = await asyncio.to_thread(fetch_avatar_base64_raw, url)
+    base64_data = fetch_avatar_base64_raw(url)
     if base64_data:
         return {"base64_data": base64_data}
     return {"error": "Failed to fetch remote asset image data"}
