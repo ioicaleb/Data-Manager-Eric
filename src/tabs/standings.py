@@ -62,7 +62,7 @@ def generate_standings_tab(page: ft.Page):
             ]
         )
     )
-    content_width = max(320, (page.width or 600) - 20) if is_mobile else min(600, (page.width or 600))
+    content_width = max(250, (page.width or 600) - 20) if is_mobile else min(600, (page.width or 600))
 
     standings_container = ft.Container(
         content=ft.Row(

@@ -693,11 +693,11 @@ async def loading_gateway(page: ft.Page):
             ref=main_menu_container,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=15,
+            scroll= ft.ScrollMode.HIDDEN,
             controls=[
                 ft.Text("🎵 Eric the Data Manager", size=28 if is_mobile else 44, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
                 ft.Text("Music League Data Manager", size=16 if is_mobile else 20, color="grey400"),
                 ft.Container(height=10),
-                
                 league_id_field,
                 error_text,
                 
