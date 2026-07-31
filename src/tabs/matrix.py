@@ -6,6 +6,7 @@ def generate_matrix_tab(page: ft.Page):
     is_mobile = (page.width or 1200) < 700
     COLUMN_WIDTH = 56 if is_mobile else 80
     DATA_CELL_WIDTH = COLUMN_WIDTH + (12 if is_mobile else 20)
+    content_height = max(400, (page.height or 900) - 220)
 
     matrix_table = ft.DataTable(
         columns=[
@@ -27,7 +28,7 @@ def generate_matrix_tab(page: ft.Page):
     )  
 
     vertical_scroll_column = ft.Column(
-        expand=True,
+        height=content_height,
         spacing=10,
         scroll=ft.ScrollMode.HIDDEN,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER 
@@ -36,7 +37,6 @@ def generate_matrix_tab(page: ft.Page):
     scrollable_horizontal_track = ft.Row(
         controls=[matrix_table],  
         scroll=ft.ScrollMode.HIDDEN,
-        expand=True,
         alignment=ft.MainAxisAlignment.CENTER 
     )
 
@@ -45,6 +45,7 @@ def generate_matrix_tab(page: ft.Page):
     matrix_container = ft.Container(
         content=ft.Row(
             controls=[vertical_scroll_column],
+            expand=True,
             alignment=ft.MainAxisAlignment.CENTER
         ),
         expand=True,
@@ -113,11 +114,10 @@ def generate_matrix_tab(page: ft.Page):
                     )
                 )
             )
-
-            votes_lookup = {str(k).strip().lower(): v for k, v in row_votes.items()}
+            votes_lookup = {str(k): v for k, v in row_votes.items()}
 
             for name in player_keys:
-                if row_player_name.strip().lower() == str(name).strip().lower():
+                if row_player_name == str(name):
                     new_row.cells.append(
                         ft.DataCell(
                             ft.Container(
@@ -129,7 +129,7 @@ def generate_matrix_tab(page: ft.Page):
                         )
                     )
                 else:
-                    score = votes_lookup.get(str(name).strip().lower(), "-")
+                    score = votes_lookup.get(str(name), "-")
                     new_row.cells.append(
                         ft.DataCell(
                             ft.Container(
@@ -144,4 +144,5 @@ def generate_matrix_tab(page: ft.Page):
             matrix_table.rows.append(new_row)
 
     hydrate_live_matrix_grid()
+    print(f"Matrix: {len(matrix_table.columns)} columns, {len(matrix_table.rows)} rows")
     return matrix_container

@@ -22,10 +22,13 @@ def build_static_dashboard_cache(cached_db_data: dict) -> dict:
     print("Starting containerized master stats pre-computation...")
     
     players = cached_db_data.get("players", [])
-    
+    username_mapping = cached_db_data.get("username_mapping", None)
+        
     all_players_precomputed_stats = {}
     
     for player in players:
+        if username_mapping:
+            player["name"] = username_mapping.get(player.get("name"), player.get("name"))
         player_name = player.get("name")
         if not player_name:
             continue

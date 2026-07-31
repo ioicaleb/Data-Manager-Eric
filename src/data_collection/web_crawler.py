@@ -33,7 +33,7 @@ def get_avatar_cache() -> dict:
 def get_avatar_url(div, player_name):
     """
     Extracts avatar image URL and updates an in-memory cache dictionary 
-    instead of calling disk-bound write_json().
+    instead of calling disk-bound send_to_db().
     """
     global _global_avatar_cache
     try:

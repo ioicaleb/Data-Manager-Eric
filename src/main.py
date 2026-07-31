@@ -370,24 +370,7 @@ async def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: 
 
             compiled_username_map[username_key] = clean_display_name
 
-            player_exists = any(p.get("name") == clean_display_name for p in new_players_list)
-            if not player_exists:
-                new_players_list.append({
-                    "name": clean_display_name,
-                    "position": "#?",
-                    "votes_to": 0,
-                    "is_manual_entry": "Custom_Unset" in username_key
-                })
-        remapped_away_names = {
-            raw for raw, mapped in compiled_username_map.items() if raw != mapped
-        }
-        new_players_list = [
-            p for p in new_players_list
-            if p.get("name") not in remapped_away_names
-        ]
-
         payload["username_mapping"] = compiled_username_map
-        payload["players"] = new_players_list
 
         existing_songs = payload.get("songs") or []
         for song in existing_songs:

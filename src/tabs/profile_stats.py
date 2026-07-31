@@ -1,14 +1,14 @@
 import asyncio
 import flet as ft
 from data_processing.data_processor import get_players
-from data_processing.cache_manager import read_json
+from data_processing.cache_manager import get_from_db
 
 from player_tabs.top_songs import generate_top_songs
 from player_tabs.all_songs import generate_all_songs
 from player_tabs.round_songs import generate_round_songs
 from player_tabs.votes_from import generate_votes_from
 from player_tabs.votes_to import generate_votes_to
-from player_tabs.profile_stats import generate_player_stats
+from player_tabs.player_stats import generate_player_stats
 from player_tabs.votes_songs import generate_votes_songs
 
 
@@ -23,7 +23,7 @@ async def generate_profile_tab(page: ft.Page, return_callback, progress_callback
     is_mobile = (page.width or 1200) < 700
 
     master_profile_wrapper = ft.Container(expand=True)
-    profiles_list = ft.ListView(expand=True, spacing=10, padding=10)
+    profiles_list = ft.ListView(expand=True, spacing=10, height= 600, padding=10)
 
     await _report(0.0, "Loading player roster...")
     players_data = get_players() or []
@@ -40,7 +40,7 @@ async def generate_profile_tab(page: ft.Page, return_callback, progress_callback
 
     def _load_player_data(p_obj):
         name = p_obj.get("name") or p_obj.get("player") or "Unknown Player"
-        stats = read_json(f"precomputed_stats_{name}") or {}
+        stats = get_from_db(f"precomputed_stats_{name}") or {}
         avatar_url = stats.get("avatar_url")
         avatar_b64 = fetch_avatar_base64_raw(avatar_url) if avatar_url else ""
         return name, stats, avatar_b64
@@ -81,6 +81,8 @@ async def generate_profile_tab(page: ft.Page, return_callback, progress_callback
         return lambda e: show_player_profile(target_name)
 
     def build_player_profile_view(player: dict, player_stats_data: dict, avatar_b64: str):
+        if player["name"] is None:
+            return
         name = player.get("name", "Unknown")
 
         back_button = ft.Button(

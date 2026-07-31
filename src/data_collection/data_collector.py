@@ -26,7 +26,7 @@ def run_pipeline_migration(league_id: str, browser_type: str, cached_db_data: di
     
     load_avatar_cache(cached_db_data.get("avatars", {}))
     
-    #results = cached_db_data.get("rounds", [])
+    results = cached_db_data.get("rounds", [])
     songs = cached_db_data.get("songs", {})
     players = cached_db_data.get("players", {})
 
@@ -99,15 +99,6 @@ def run_pipeline_migration(league_id: str, browser_type: str, cached_db_data: di
 
     cache_results = build_static_dashboard_cache(current_working_data)
     processed_players = cache_results.get("players", [])
-    filtered_players = []
-    for player in processed_players:
-        if player.get("position") == "#?":
-            continue
-        player["name"] = convert_username_to_name(
-                username=player.get("name"),
-                username_map = config.get("username-player_name")
-            )
-        filtered_players.append(player)
     precomputed_dashboard_stats = cache_results.get("precomputed_stats", {})
     
     updated_avatars = get_avatar_cache()
@@ -115,7 +106,7 @@ def run_pipeline_migration(league_id: str, browser_type: str, cached_db_data: di
     return {
         "rounds": results,
         "songs": songs,
-        "players": filtered_players,
+        "players": processed_players,
         "precomputed_stats": precomputed_dashboard_stats,
         "avatars": updated_avatars,
         "username_mapping": config["username-player_name"]

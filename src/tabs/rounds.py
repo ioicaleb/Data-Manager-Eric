@@ -17,7 +17,7 @@ def generate_rounds_tab(page: ft.Page):
         alignment=ft.MainAxisAlignment.START,
         spacing=15,
         scroll=ft.ScrollMode.HIDDEN,
-        height=content_height
+        height=content_height,
     )
 
     views_map = {}

@@ -1,4 +1,4 @@
-from data_processing.cache_manager import read_json
+from data_processing.cache_manager import get_from_db
 import re
 
 songs = None
@@ -21,19 +21,19 @@ def clear_search_processor_globals():
 def get_songs():
     global songs
     if songs is None:
-        songs = read_json("songs") or []
+        songs = get_from_db("songs") or []
     return songs
 
 def get_rounds():
     global rounds
     if rounds is None:
-        rounds = read_json("rounds") or []
+        rounds = get_from_db("rounds") or []
     return rounds
 
 def get_players():
     global players
     if players is None:
-        players_list = read_json("players") or []
+        players_list = get_from_db("players") or []
         
         sorted_players = sorted(players_list, key=lambda x: x.get("votes_to", 0), reverse=True)
 
@@ -159,7 +159,6 @@ def get_player_avatar(player):
 def init_search_cache():
     """
     Creates an inverted index, mapping single keywords to their respective song dicts.
-    FIXED: Calls get_songs() to guarantee data hydration before caching.
     """
     global _search_index
     _search_index = {}
