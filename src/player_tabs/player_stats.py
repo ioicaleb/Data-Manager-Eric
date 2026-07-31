@@ -196,7 +196,7 @@ def generate_player_stats(player_stats_data):
         expand=True,
         spacing=15,
         padding=ft.Padding(20, 0, 20, 20),
-        scroll=ft.ScrollMode.HIDDEN,
+        scroll=ft.ScrollMode.AUTO,
         controls=[
             ft.Card(content=ft.Container(content=favorite_player_container, padding=12)),
             ft.Card(content=ft.Container(content=top_player_container, padding=12)),

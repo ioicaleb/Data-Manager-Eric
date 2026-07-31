@@ -30,8 +30,6 @@ def get_from_db(filename):
             
     if filename in _global_db_cache:
         return _global_db_cache[filename]
-        
-    print(f"Proxy Warning: Virtual data key '{filename}' not found in runtime memory.")
     return None
 
 def send_to_db(filename, data):

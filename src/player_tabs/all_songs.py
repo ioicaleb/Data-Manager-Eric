@@ -11,7 +11,7 @@ def generate_all_songs(player_stats_data):
     all_songs_list = ft.Container(
         content=ft.Column(
             controls=[], 
-            scroll=ft.ScrollMode.HIDDEN,
+            scroll=ft.ScrollMode.AUTO,
             spacing=15
         ),
         border_radius=10,

@@ -12,7 +12,7 @@ def generate_songs_tab(page: ft.Page):
         spacing=15,
         height=content_height,
         controls=[],
-        scroll=ft.ScrollMode.HIDDEN
+        scroll=ft.ScrollMode.AUTO
     )
 
     def search_song(e=None):

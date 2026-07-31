@@ -22,7 +22,7 @@ def generate_votes_from(player_stats_data, player_name):
     votes_from_list = ft.Container(
         content=ft.Column(
             controls=[], 
-            scroll=ft.ScrollMode.HIDDEN,
+            scroll=ft.ScrollMode.AUTO,
             spacing=10
         ),
         border_radius=10,

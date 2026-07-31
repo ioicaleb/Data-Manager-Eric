@@ -10,9 +10,9 @@ def generate_standings_tab(page: ft.Page):
     line_size = 20 if is_mobile else 32
     content_height = max(400, (page.height or 900) - 260)
 
-    votes_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN, height=content_height)
-    wins_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN, height=content_height)
-    comments_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.HIDDEN, height=content_height)
+    votes_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.AUTO, height=content_height)
+    wins_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.AUTO, height=content_height)
+    comments_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.AUTO, height=content_height)
     
     def hydrate_live_standings_view():
         """
@@ -62,20 +62,17 @@ def generate_standings_tab(page: ft.Page):
             ]
         )
     )
-    content_width = max(250, (page.width or 600) - 20) if is_mobile else min(600, (page.width or 600))
 
     standings_container = ft.Container(
-        content=ft.Row(
+        content=ft.ResponsiveRow(
             controls=[
                 ft.Column(
                     controls=[tab_view],
-                    width=content_width,
-                    height=content_height + 100,
+                    col={"sm":12, "md": 8, "lg": 6, "xl": 5},
                     expand=False,
                 )
             ],
             alignment=ft.MainAxisAlignment.CENTER,
-            vertical_alignment=ft.CrossAxisAlignment.START
         ),
         expand=True,
         padding=ft.Padding(10, 0, 10, 0) if is_mobile else ft.Padding(0, 0, 0, 0)

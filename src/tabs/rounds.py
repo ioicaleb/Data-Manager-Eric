@@ -17,7 +17,7 @@ def generate_rounds_tab(page: ft.Page):
         controls=[],
         alignment=ft.MainAxisAlignment.START,
         spacing=15,
-        scroll=ft.ScrollMode.HIDDEN,
+        scroll=ft.ScrollMode.AUTO,
         height=sidebar_list_height
     )
 
@@ -186,7 +186,7 @@ def generate_rounds_tab(page: ft.Page):
                             controls=[round_header, ft.Container(height=2), song_details],
                             spacing=10,
                             margin=ft.Margin(10, 0, 0, 0),
-                            scroll=ft.ScrollMode.HIDDEN,
+                            scroll=ft.ScrollMode.AUTO,
                             height=content_height
                         ),
                     ],

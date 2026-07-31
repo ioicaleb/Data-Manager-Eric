@@ -33,13 +33,13 @@ def generate_matrix_tab(page: ft.Page):
         height=content_height,
         width=content_width,
         spacing=10,
-        scroll=ft.ScrollMode.HIDDEN,
+        scroll=ft.ScrollMode.AUTO,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER 
     )
 
     scrollable_horizontal_track = ft.Row(
         controls=[matrix_table],  
-        scroll=ft.ScrollMode.HIDDEN,
+        scroll=ft.ScrollMode.AUTO,
         width=content_width,
         alignment=ft.MainAxisAlignment.CENTER 
     )

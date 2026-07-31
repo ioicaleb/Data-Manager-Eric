@@ -12,7 +12,7 @@ def generate_votes_songs(player_stats_data, player_name):
     votes_songs_list = ft.Container(
         content=ft.Column(
             controls=[], 
-            scroll=ft.ScrollMode.HIDDEN,
+            scroll=ft.ScrollMode.AUTO,
             spacing=20
         ),
         border_radius=10,
