@@ -171,7 +171,7 @@ async def generate_profile_tab(page: ft.Page, return_callback, progress_callback
             section_picker = ft.Dropdown(
                 value=first_title,
                 options=[ft.dropdown.Option(title) for title in views_map.keys()],
-                on_change=handle_menu_click,
+                on_select=handle_menu_click,
                 expand=True
             )
 
