@@ -188,7 +188,7 @@ def process_player_stats(player: dict, top_songs_data: list, all_songs_data: lis
     """
     Precomputes dynamic statistics variables, verifying list/dict indices inside container loops.
     """
-    data = get_from_db(f"precomputed_stats_{player.get("name")}") or {}
+    data = get_from_db(f"precomputed_stats_{player.get('name')}") or {}
     if not data:
         top_votes = 0
         total_votes_given = 0
