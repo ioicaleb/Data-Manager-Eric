@@ -23,7 +23,7 @@ async def generate_profile_tab(page: ft.Page, return_callback, progress_callback
     is_mobile = (page.width or 1200) < 700
 
     master_profile_wrapper = ft.Container(expand=True)
-    profiles_list = ft.ListView(expand=True, spacing=10, height= 600, padding=10)
+    profiles_list = ft.ListView(expand=True, spacing=10, height= 600)
 
     await _report(0.0, "Loading player roster...")
     players_data = get_players() or []

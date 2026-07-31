@@ -27,8 +27,11 @@ def generate_matrix_tab(page: ft.Page):
         heading_row_height=52
     )  
 
+    content_width = max(400, (page.width or 1200) - 40)
+
     vertical_scroll_column = ft.Column(
         height=content_height,
+        width=content_width,
         spacing=10,
         scroll=ft.ScrollMode.HIDDEN,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER 
@@ -37,6 +40,7 @@ def generate_matrix_tab(page: ft.Page):
     scrollable_horizontal_track = ft.Row(
         controls=[matrix_table],  
         scroll=ft.ScrollMode.HIDDEN,
+        width=content_width,
         alignment=ft.MainAxisAlignment.CENTER 
     )
 
@@ -45,8 +49,8 @@ def generate_matrix_tab(page: ft.Page):
     matrix_container = ft.Container(
         content=ft.Row(
             controls=[vertical_scroll_column],
-            expand=True,
-            alignment=ft.MainAxisAlignment.CENTER
+            alignment=ft.MainAxisAlignment.CENTER,
+            vertical_alignment=ft.CrossAxisAlignment.START
         ),
         expand=True,
         padding=10
@@ -144,5 +148,4 @@ def generate_matrix_tab(page: ft.Page):
             matrix_table.rows.append(new_row)
 
     hydrate_live_matrix_grid()
-    print(f"Matrix: {len(matrix_table.columns)} columns, {len(matrix_table.rows)} rows")
     return matrix_container

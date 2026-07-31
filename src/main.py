@@ -370,8 +370,24 @@ async def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: 
 
             compiled_username_map[username_key] = clean_display_name
 
-        payload["username_mapping"] = compiled_username_map
+            player_exists = any(p.get("name") == clean_display_name for p in new_players_list)
+            if not player_exists:
+                new_players_list.append({
+                    "name": clean_display_name,
+                    "position": "#?",
+                    "votes_to": 0,
+                    "is_manual_entry": "Custom_Unset" in username_key
+                })
+        remapped_away_names = {
+            raw for raw, mapped in compiled_username_map.items() if raw != mapped
+        }
+        new_players_list = [
+            p for p in new_players_list
+            if p.get("name") not in remapped_away_names
+        ]
 
+        payload["username_mapping"] = compiled_username_map
+        payload["players"] = new_players_list
         existing_songs = payload.get("songs") or []
         for song in existing_songs:
             if not isinstance(song, dict):
@@ -707,33 +723,33 @@ async def loading_gateway(page: ft.Page):
                                     ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
                                 )
                             )
-                        )
-                    ]
-                ),
+                        ),
 
-                ft.Container(
-                    col={"xs": 12, "sm": 12, "md": 6, "lg": 5},
-                    content=ft.Card(
-                        content=ft.Container(
-                            padding=20,
-                            content=ft.Column(
-                                [
-                                    ft.Text("🛠️ Admin Panel", size=20, weight=ft.FontWeight.BOLD),
-                                    ft.Text("Initialize new leagues or get results of new rounds.", size=16, color="grey"),
-                                    admin_password_field,
-                                    browser_dropdown,
-                                    ft.ElevatedButton(
-                                        "Sync Data",
-                                        on_click=lambda e: page.run_task(execute_portal_pipeline, True),
-                                        icon=ft.Icons.RUN_CIRCLE,
-                                        bgcolor="amber700",
-                                        color="white"
+                        ft.Container(
+                            col={"xs": 12, "sm": 12, "md": 6, "lg": 5},
+                            content=ft.Card(
+                                content=ft.Container(
+                                    padding=20,
+                                    content=ft.Column(
+                                        [
+                                            ft.Text("🛠️ Admin Panel", size=20, weight=ft.FontWeight.BOLD),
+                                            ft.Text("Initialize new leagues or get results of new rounds.", size=16, color="grey"),
+                                            admin_password_field,
+                                            browser_dropdown,
+                                            ft.ElevatedButton(
+                                                "Sync Data",
+                                                on_click=lambda e: page.run_task(execute_portal_pipeline, True),
+                                                icon=ft.Icons.RUN_CIRCLE,
+                                                bgcolor="amber700",
+                                                color="white"
+                                            )
+                                        ], 
+                                        horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10
                                     )
-                                ], 
-                                horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10
+                                )
                             )
                         )
-                    )
+                    ]
                 )
             ]
         )

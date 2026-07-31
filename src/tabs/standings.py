@@ -62,7 +62,7 @@ def generate_standings_tab(page: ft.Page):
             ]
         )
     )
-    content_width = None if is_mobile else min(600, (page.width or 600))
+    content_width = max(320, (page.width or 600) - 20) if is_mobile else min(600, (page.width or 600))
 
     standings_container = ft.Container(
         content=ft.Row(
@@ -70,7 +70,8 @@ def generate_standings_tab(page: ft.Page):
                 ft.Column(
                     controls=[tab_view],
                     width=content_width,
-                    expand=is_mobile,
+                    height=content_height + 100,
+                    expand=False,
                 )
             ],
             alignment=ft.MainAxisAlignment.CENTER,

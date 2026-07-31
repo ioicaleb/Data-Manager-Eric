@@ -12,12 +12,13 @@ def generate_rounds_tab(page: ft.Page):
     content_height = max(400, (page.height or 900) - 220)
 
     content_stack = ft.Stack(expand=True)
+    sidebar_list_height = 150 if is_mobile else max(300, content_height - 110)
     navigation_menu = ft.Column(
         controls=[],
         alignment=ft.MainAxisAlignment.START,
         spacing=15,
         scroll=ft.ScrollMode.HIDDEN,
-        height=content_height,
+        height=sidebar_list_height
     )
 
     views_map = {}
@@ -81,7 +82,9 @@ def generate_rounds_tab(page: ft.Page):
         for title in sorted_titles:
             if not keyword or keyword in title.lower():
                 navigation_menu.controls.append(create_menu_button(title))
-        
+
+        navigation_menu.controls.append(ft.Container(height=24))
+
         if not initial_load:
             try:
                 navigation_menu.update()
@@ -138,9 +141,7 @@ def generate_rounds_tab(page: ft.Page):
             song_details = ft.Container(
                 content=ft.Column(
                     controls=[], 
-                    spacing=15,
-                    scroll=ft.ScrollMode.HIDDEN,
-                    height=content_height
+                    spacing=15
                 ),
                 alignment=ft.Alignment.TOP_LEFT,
                 bgcolor=ft.Colors.TRANSPARENT
@@ -160,6 +161,8 @@ def generate_rounds_tab(page: ft.Page):
                         spacing=2
                     )
                     song_details.content.controls.append(song_info)
+
+            song_details.content.controls.append(ft.Container(height=24))
                 
             winner_list = round_item.get("winner", []) or []
             winner_count = len(winner_list)
@@ -183,7 +186,8 @@ def generate_rounds_tab(page: ft.Page):
                             controls=[round_header, ft.Container(height=2), song_details],
                             spacing=10,
                             margin=ft.Margin(10, 0, 0, 0),
-                            expand=True
+                            scroll=ft.ScrollMode.HIDDEN,
+                            height=content_height
                         ),
                     ],
                     expand=True
