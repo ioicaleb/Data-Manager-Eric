@@ -570,7 +570,7 @@ async def loading_gateway(page: ft.Page):
                 page.update() 
                 
                 await asyncio.to_thread(
-                    save_league_data_to_postgres, l_id, hashed_pwd, updated_payload, browser_type
+                    save_league_data_to_postgres, l_id, hashed_pwd, updated_payload, browser_type)
                 db_cache_payload = updated_payload
 
             if not db_cache_payload or (not db_cache_payload.get("rounds") and not db_cache_payload.get("players")):
@@ -701,34 +701,35 @@ async def loading_gateway(page: ft.Page):
                                     horizontal_alignment=ft.CrossAxisAlignment.CENTER)
                                 )
                             )
-                    ),
-                    ft.Container(
-                        col={"xs": 12, "sm": 12, "md": 6, "lg": 5},
-                        content=ft.Card(
-                            content=ft.Container(
-                                padding=20,
-                                content=ft.Column([
-                                    ft.Text("🛠️ Admin Panel", size=20, weight=ft.FontWeight.BOLD),
-                                    ft.Text("Initialize new leagues or pull results of new rounds.", size=16, color="grey"),
-                                    admin_password_field,
-                                    browser_dropdown,
-                                    ft.ElevatedButton(
-                                        "Sync Data",
-                                        on_click=lambda e: page.run_task(execute_portal_pipeline, True),
-                                        icon=ft.Icons.RUN_CIRCLE,
-                                        bgcolor="amber700",
-                                        color="white"
-                                    )
-                                ],
-                                horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
-                                spacing=10
+                        )
+                    ]
+                ),
+                ft.Container(
+                    col={"xs": 12, "sm": 12, "md": 6, "lg": 5},
+                    content=ft.Card(
+                        content=ft.Container(
+                            padding=20,
+                            content=ft.Column([
+                                ft.Text("🛠️ Admin Panel", size=20, weight=ft.FontWeight.BOLD),
+                                ft.Text("Initialize new leagues or pull results of new rounds.", size=16, color="grey"),
+                                admin_password_field,
+                                browser_dropdown,
+                                ft.ElevatedButton(
+                                    "Sync Data",
+                                    on_click=lambda e: page.run_task(execute_portal_pipeline, True),
+                                    icon=ft.Icons.RUN_CIRCLE,
+                                    bgcolor="amber700",
+                                    color="white"
                                 )
+                            ],
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
+                            spacing=10
                             )
                         )
                     )
-                ]
-            )
-        ]
+                )
+            ]
+        )   
     )
     page.update()
     
