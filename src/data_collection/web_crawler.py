@@ -16,7 +16,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
-from selenium.webdriver.firefox.service import Service as FirefoxService
 
 _global_avatar_cache = {}
 
@@ -33,7 +32,7 @@ def get_avatar_cache() -> dict:
 def get_avatar_url(div, player_name):
     """
     Extracts avatar image URL and updates an in-memory cache dictionary 
-    instead of calling disk-bound send_to_db().
+    instead of calling disk-bound write_json().
     """
     global _global_avatar_cache
     try:
@@ -79,7 +78,7 @@ def get_round_results(driver, config):
             user_comment = div.select_one("div:nth-child(2) > p > span").get_text().strip()
             player_name = convert_username_to_name(
                 username=username_div.get_text().strip(),
-                username_map = config.get("username-player_name")
+                players=players
             )
         
             get_avatar_url(div, player_name)
@@ -93,7 +92,7 @@ def get_round_results(driver, config):
             for voter_info in voters_card:
                 voter_name = convert_username_to_name(
                     username=voter_info.select_one(":nth-child(2) > b").get_text(),
-                    username_map = config.get("username-player_name")
+                    players=players
                 )
                 
                 vote_block = voter_info.select_one(":nth-child(3) > h6")
@@ -244,31 +243,39 @@ def get_missing_rounds(driver, config, missing_rounds, existing_rounds_cache):
             print(f"Got round {i} out of {missing_rounds}")
     return rounds
 
-def get_firefox_profile_path():
-    home = os.path.expanduser("~")
+def apply_stored_session(driver, session_cookie_value: str, cookie_name: str = "app.musicleague.com", domain: str = "app.musicleague.com"):
+    """
+    Injects a previously-captured Music League session cookie into the
+    driver, instead of relying on any local browser profile — which can
+    never contain another admin's login, only whoever's machine the code
+    happens to run on. Each league stores its own admin's captured cookie
+    value; this makes that cookie's session the browser's session.
+    """
+    driver.get(f"https://{domain}/")
+    driver.add_cookie({
+        "name": cookie_name,
+        "value": session_cookie_value,
+        "domain": domain,
+        "path": "/",
+        "secure": True,
+    })
+    driver.get(f"https://{domain}/l/")
 
-    if os.name == "nt":
-        base_path = os.path.join(home, "AppData", "Roaming", "Mozilla", "Firefox", "Profiles")
-    elif sys.platform == "darwin":
-        base_path = os.path.join(home, "Library", "Application Support", "Mozilla", "Firefox", "Profiles")
-    else:
-        base_path = os.path.join(home, ".mozilla", "firefox")
-
-    profiles = glob.glob(os.path.join(base_path, "*.default*"))
-    if not profiles:
-        raise FileNotFoundError("No Firefox profile found. Please ensure Firefox is installed.")
-
-    return profiles[0]
-
-def get_chrome_user_data_dir():
-    home = os.path.expanduser("~")
-
-    if os.name == "nt":
-        return os.path.join(home, "AppData", "Local", "Google", "Chrome", "User Data")
-    elif sys.platform == "darwin":
-        return os.path.join(home, "Library", "Application Support", "Google", "Chrome")
-    else:
-        return os.path.join(home, ".config", "google-chrome")
+def apply_stored_session_localstorage(driver, storage_key: str, storage_value: str, domain: str = "app.musicleague.com"):
+    """
+    Injects a captured session token into localStorage instead of a cookie.
+    Use this instead of apply_stored_session() if Music League's session is
+    actually stored client-side (localStorage/IndexedDB) rather than as an
+    HTTP cookie — confirm this in your browser's dev tools under
+    Application > Local Storage for app.musicleague.com before using this.
+    """
+    driver.get(f"https://{domain}/")
+    driver.execute_script(
+        "window.localStorage.setItem(arguments[0], arguments[1]);",
+        storage_key,
+        storage_value,
+    )
+    driver.get(f"https://{domain}/l/")
 
 def setup_authenticated_driver(config: dict):
     """
@@ -277,26 +284,16 @@ def setup_authenticated_driver(config: dict):
     """
     browser_type = config.get("browser_type", "chromium")
     if browser_type == "firefox":
-        options = FirefoxOptions()
-        options.add_argument("-headless")
-        os.environ["MOZ_DISABLE_CONTENT_SANDBOX"] = "1"
-        options.set_preference("security.sandbox.content.level", 0)
-        options.set_preference("dom.ipc.processCount", 1)
-        options.set_preference("browser.tabs.remote.autostart", False)
-        options.set_preference("layers.acceleration.disabled", True)
-        options.set_preference("permissions.default.image", 2)
-        options.set_preference("dom.ipc.processCount", 1) 
-        options.set_preference("gfx.webrender.all", False)
-
         try:
             profile_path = get_firefox_profile_path()
-            options.profile = FirefoxProfile(profile_path)
-        except Exception as e:
-            print(f"No local Firefox profile found (expected in Docker) — continuing headless without one: {e}")
-
-        from webdriver_manager.firefox import GeckoDriverManager
-        service = FirefoxService(GeckoDriverManager().install())
-        driver = webdriver.Firefox(options=options, service=service)
+            safe_profile = FirefoxProfile(profile_path)
+            options = FirefoxOptions()
+            options.add_argument("-headless")
+            options.profile = safe_profile
+        except Exception:
+            options = FirefoxOptions()
+            
+        driver = webdriver.Firefox(options=options)
     else:
         user_data_path = get_chrome_user_data_dir()
         options = ChromeOptions()
@@ -326,11 +323,21 @@ def get_results(config, results = None):
         if not driver:
             print("Aborting collection pipeline run: Driver failed authentication allocation.")
             return results
+
+        session_cookie = config.get("session_cookie")
+        if session_cookie:
+            apply_stored_session(driver, session_cookie)
+
+        session_storage_key = config.get("session_storage_key")
+        session_storage_value = config.get("session_storage_value")
+        if session_storage_key and session_storage_value:
+            apply_stored_session_localstorage(driver, session_storage_key, session_storage_value)
+
         target_url = f"https://app.musicleague.com/l/{config.get('league_id')}/"
         driver.get(target_url)
         time.sleep(1)
         if results:
-            return check_for_new_rounds(driver = driver, config = config, results=results)
+            return check_for_new_rounds(driver, config, results=results)
         else:
             return get_all_rounds(driver, config)     
     except Exception as e:
