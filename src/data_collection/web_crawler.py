@@ -7,9 +7,6 @@ including round information, song submissions, and voting details.
 
 import time
 import re
-import os
-import glob
-import sys
 from bs4 import BeautifulSoup, NavigableString
 from data_collection.objects import Round, Voter, Song, convert_username_to_name
 from selenium import webdriver
