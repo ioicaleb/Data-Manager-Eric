@@ -21,8 +21,8 @@ from tabs.song_check import generate_songs_tab
 from data_processing.cache_manager import initialize_memory_cache
 from data_processing.search_processor import clear_search_processor_globals, init_search_cache
 from data_processing.cache_builder import build_static_dashboard_cache
-from data_collection.data_collector import run_pipeline_migration, process_results
-from data_collection.web_crawler import get_avatar_cache
+from data_collection.data_collector import run_pipeline_migration
+from data_collection import live_auth
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
@@ -46,8 +46,6 @@ conn.commit()
 cur.close()
 conn.close()
 print("Database successfully generated!")
-
-username_mapping = {}
 
 def get_league_data_from_postgres(league_id: str) -> dict:
     DATABASE_URL = os.getenv("DATABASE_URL")
@@ -269,7 +267,7 @@ def show_loading_page(page: ft.Page):
     
     return progress_bar, status_text
 
-async def show_username_mapping_wizard(page: ft.Page, existing_map: dict, scraped_users: list, league_id: str, pwd_hash: str):
+async def show_username_mapping_wizard(page: ft.Page, payload: dict, league_id: str, pwd_hash: str):
     """
     Renders an interactive administrative onboarding panel to map 
     scraped system usernames directly to clean visual profile names.
@@ -281,7 +279,9 @@ async def show_username_mapping_wizard(page: ft.Page, existing_map: dict, scrape
     """
     wizard_done = asyncio.Event()
     page.title = "Username Wizard"
-    global username_mapping
+    
+    existing_map = payload.get("username_mapping") or {}
+    scraped_users = list(payload.get("avatars", {}).keys())
     
     if "[Left the league]" in scraped_users:
         scraped_users.remove("[Left the league]")
@@ -344,6 +344,8 @@ async def show_username_mapping_wizard(page: ft.Page, existing_map: dict, scrape
 
     async def handle_save_and_sync(e):
         compiled_username_map = {}
+        new_players_list = payload.get("players") or []
+
         for username_key, text_control in text_fields_registry.items():
             clean_display_name = text_control.value.strip()
             if not clean_display_name:
@@ -351,19 +353,69 @@ async def show_username_mapping_wizard(page: ft.Page, existing_map: dict, scrape
 
             compiled_username_map[username_key] = clean_display_name
 
-        page.controls.clear()
-        page.horizontal_alignment = ft.CrossAxisAlignment.START
-        page.vertical_alignment = ft.MainAxisAlignment.START
-        wizard_done.set()
-        username_mapping.update(compiled_username_map)
+            player_exists = any(p.get("name") == clean_display_name for p in new_players_list)
+            if not player_exists:
+                new_players_list.append({
+                    "name": clean_display_name,
+                    "position": "#?",
+                    "votes_to": 0,
+                    "is_manual_entry": "Custom_Unset" in username_key
+                })
+        remapped_away_names = {
+            raw for raw, mapped in compiled_username_map.items() if raw != mapped
+        }
+        new_players_list = [
+            p for p in new_players_list
+            if p.get("name") not in remapped_away_names
+        ]
 
-    async def handle_skip_wizards(e):        
+        payload["username_mapping"] = compiled_username_map
+        payload["players"] = new_players_list
+        existing_songs = payload.get("songs") or []
+        for song in existing_songs:
+            if not isinstance(song, dict):
+                continue
+            raw_submitter = song.get("player_name")
+            if raw_submitter in compiled_username_map:
+                song["player_name"] = compiled_username_map[raw_submitter]
+            for voter in song.get("voters", []) or []:
+                if not isinstance(voter, dict):
+                    continue
+                raw_voter = voter.get("name")
+                if raw_voter in compiled_username_map:
+                    voter["name"] = compiled_username_map[raw_voter]
+        payload["songs"] = existing_songs
+
+        initialize_memory_cache(payload)
+        build_static_dashboard_cache(payload)
+        init_search_cache()
+
+        save_league_data_to_postgres(
+            league_id=league_id,
+            secret_pwd_hash=pwd_hash,
+            payload=payload,
+            browser=payload.get("browser_type", "chromium")
+        )
+
         page.controls.clear()
         page.horizontal_alignment = ft.CrossAxisAlignment.START
         page.vertical_alignment = ft.MainAxisAlignment.START
+        await main_dashboard(page)
         wizard_done.set()
-        if not username_mapping:
-            username_mapping.update({user: user for user in scraped_users})
+
+    async def handle_skip_wizards(e):
+        if not payload.get("username_mapping"):
+            payload["username_mapping"] = {u: u for u in scraped_users}
+            
+        initialize_memory_cache(payload)
+        build_static_dashboard_cache(payload)
+        init_search_cache()
+        
+        page.controls.clear()
+        page.horizontal_alignment = ft.CrossAxisAlignment.START
+        page.vertical_alignment = ft.MainAxisAlignment.START
+        await main_dashboard(page)
+        wizard_done.set()
 
     wizard_is_mobile = (page.width or 1200) < 700
     wizard_panel = ft.Container(
@@ -451,7 +503,63 @@ async def loading_gateway(page: ft.Page):
         ]
     )
     error_text = ft.Text(value="", color="red", size=20, weight=ft.FontWeight.BOLD)
+    live_login_status = ft.Text(value="", size=14, color="grey400")
     main_menu_container = ft.Ref[ft.Column]()
+
+    async def start_live_login(e):
+        if live_auth.is_live_session_active():
+            live_login_status.value = "A live login session is already running."
+            live_login_status.color = "amber"
+            page.update()
+            return
+
+        live_login_status.value = "Starting live login session..."
+        live_login_status.color = "grey400"
+        page.update()
+
+        try:
+            await asyncio.to_thread(live_auth.start_live_login_session, {"browser_type": browser_dropdown.value})
+        except Exception as ex:
+            live_login_status.value = f"Failed to start live session: {ex}"
+            live_login_status.color = "red"
+            page.update()
+            return
+
+        # LIVE_LOGIN_HOST should be set once deployed (e.g. your Oracle
+        # VM's public IP or domain) — this stays blank/unusable on Render
+        # since that port isn't exposed there, which is expected: this
+        # flow is built for the eventual Oracle deployment.
+        host = os.getenv("LIVE_LOGIN_HOST", "<set LIVE_LOGIN_HOST env var>")
+        live_login_status.value = (
+            f"Live browser ready. Open this link, log in normally, then click "
+            f"'I'm Done — Capture Cookie' below: http://{host}:6080/vnc.html"
+        )
+        live_login_status.color = "green"
+        page.update()
+
+    async def finish_live_login(e):
+        live_login_status.value = "Capturing session cookie..."
+        live_login_status.color = "grey400"
+        page.update()
+
+        try:
+            captured_value = await asyncio.to_thread(live_auth.capture_session_cookie)
+        except Exception as ex:
+            live_login_status.value = f"Capture failed: {ex}"
+            live_login_status.color = "red"
+            page.update()
+            return
+        finally:
+            await asyncio.to_thread(live_auth.end_live_login_session)
+
+        if captured_value:
+            session_cookie_field.value = captured_value
+            live_login_status.value = "✅ Cookie captured and filled in below. You can now run Sync Data."
+            live_login_status.color = "green"
+        else:
+            live_login_status.value = "No session cookie found — login may not have completed. Try again."
+            live_login_status.color = "red"
+        page.update()
 
     async def execute_portal_pipeline(is_admin_mode: bool):
         l_id = league_id_field.value.strip()
@@ -498,7 +606,7 @@ async def loading_gateway(page: ft.Page):
         progress_bar, status_text = show_loading_page(page)
         
         try:
-            progress_bar.value = 0.05
+            progress_bar.value = 0.15
             status_text.value = "Contacting database..."
             page.update() 
             
@@ -511,7 +619,7 @@ async def loading_gateway(page: ft.Page):
                     has_no_history = False
 
             if is_admin_mode or has_no_history:
-                progress_bar.value = 0.1
+                progress_bar.value = 0.35
                 status_text.value = f"Opening Music League..."
                 page.update() 
                 
@@ -519,64 +627,57 @@ async def loading_gateway(page: ft.Page):
                     if not verify_admin_password_hash(l_id, hashed_pwd):
                         raise ValueError("Admin Authentication Failed: Invalid secret key for this league ID.")
                 
-                progress_bar.value = 0.15
+                progress_bar.value = 0.55
                 status_text.value = "Extracting league results..."
                 page.update() 
                 
-                scraped_results = await asyncio.to_thread(
+                updated_payload = await asyncio.to_thread(
                     run_pipeline_migration, l_id, browser_type, session_cookie_value, db_cache_payload or {}
                 )
                 
-                if not scraped_results:
-                    raise ValueError("Specified League ID has no parsed history. An Admin must scrape league data first.")
-                global username_mapping
-                scraped_usernames = get_avatar_cache().keys()
-
-                has_unmapped = any(user not in username_mapping for user in scraped_usernames)
-                if (not username_mapping or has_unmapped) and is_admin_mode:
-                    status_text.value = "Launching User Mapping Wizard..."
-                    page.update()
-                    
-                    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-                    page.vertical_alignment = ft.MainAxisAlignment.CENTER
-                    page.controls.clear()
-                    
-                    await show_username_mapping_wizard(page, username_mapping, list(scraped_usernames), l_id, hashed_pwd)
-
-                progress_bar.value = 0.45
-                status_text.value = "Processing data..."
-                page.update()
-
-                updated_payload = await asyncio.to_thread(process_results, username_mapping)
-                
-                progress_bar.value = 0.50
+                progress_bar.value = 0.70
                 status_text.value = "Saving data..."
                 page.update() 
-
-                updated_payload["username_mapping"] = username_mapping
+                
                 await asyncio.to_thread(
                     save_league_data_to_postgres, l_id, hashed_pwd, updated_payload, browser_type)
                 db_cache_payload = updated_payload
 
+            if not db_cache_payload or (not db_cache_payload.get("rounds") and not db_cache_payload.get("players")):
+                raise ValueError("Specified League ID has no parsed history. An Admin must scrape league data first.")
 
-            progress_bar.value = 0.55
+            username_map = db_cache_payload.get("username_mapping", {})
+            scraped_usernames = db_cache_payload.get("avatars", {}).keys() 
+
+            has_unmapped = any(user not in username_map for user in scraped_usernames)
+            if (not username_map or has_unmapped) and is_admin_mode:
+                status_text.value = "Launching User Mapping Wizard..."
+                page.update()
+                
+                page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+                page.vertical_alignment = ft.MainAxisAlignment.CENTER
+                page.controls.clear()
+                
+                await show_username_mapping_wizard(page, db_cache_payload, l_id, hashed_pwd)
+                return
+            progress_bar.value = 0.80
             status_text.value = "Initializing data storage..."
             page.update() 
             await asyncio.to_thread(initialize_memory_cache, db_cache_payload)
 
-            progress_bar.value = 0.7
-            status_text.value = "Building dashboard & preparing search..."
+            progress_bar.value = 0.95
+            status_text.value = "Compiling profiles & preparing search..."
             page.update() 
             
             await asyncio.to_thread(build_static_dashboard_cache, db_cache_payload)
             await asyncio.to_thread(init_search_cache)
 
-            progress_bar.value = 0.75
-            status_text.value = "Building player profiles..."
+            progress_bar.value = 0.9
+            status_text.value = "Rendering dashboard — building player profiles takes a bit longer..."
             page.update()
 
             def _dashboard_progress(fraction: float, message: str):
-                progress_bar.value = min(0.99, 0.75 + fraction * 0.1)
+                progress_bar.value = min(0.99, 0.9 + fraction * 0.1)
                 status_text.value = message
                 page.update()
 
@@ -594,7 +695,7 @@ async def loading_gateway(page: ft.Page):
             error_text.value = str(val_ex)
             if main_menu_container.current is not None:
                 main_menu_container.current.visible = True
-                page.add(ft.Column(ref=main_menu_container)) 
+                page.add(ft.Column(ref=main_menu_container, controls=page.controls)) 
             else:
                 error_text.value = f"Warning: {str(val_ex)}"
                 page.add(
@@ -682,6 +783,23 @@ async def loading_gateway(page: ft.Page):
                                         admin_password_field,
                                         session_cookie_field,
                                         browser_dropdown,
+                                        ft.Row(
+                                            controls=[
+                                                ft.OutlinedButton(
+                                                    "Log In Live",
+                                                    on_click=lambda e: page.run_task(start_live_login, e),
+                                                    icon=ft.Icons.SENSORS,
+                                                ),
+                                                ft.OutlinedButton(
+                                                    "I'm Done — Capture Cookie",
+                                                    on_click=lambda e: page.run_task(finish_live_login, e),
+                                                    icon=ft.Icons.CHECK_CIRCLE,
+                                                ),
+                                            ],
+                                            alignment=ft.MainAxisAlignment.CENTER,
+                                            wrap=True,
+                                        ),
+                                        live_login_status,
                                         ft.ElevatedButton(
                                             "Sync Data",
                                             on_click=lambda e: page.run_task(execute_portal_pipeline, True),

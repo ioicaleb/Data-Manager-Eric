@@ -18,7 +18,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium \
     chromium-driver \
     firefox-esr \
+    libgtk-3-0 \
+    libdbus-glib-1-2 \
+    libxt6 \
+    libasound2 \
+    libx11-xcb1 \
+    libgbm1 \
+    libnss3 \
+    fonts-liberation \
+    xvfb \
+    x11vnc \
+    novnc \
+    websockify \
     && rm -rf /var/lib/apt/lists/*
+
+# Install geckodriver explicitly (firefox-esr has no matching apt driver package,
+# so it must be downloaded and pinned manually — unlike chromium-driver above)
+ARG GECKODRIVER_VERSION=0.35.0
+RUN curl -sSL "https://github.com/mozilla/geckodriver/releases/download/v${GECKODRIVER_VERSION}/geckodriver-v${GECKODRIVER_VERSION}-linux64.tar.gz" \
+    | tar xz -C /usr/local/bin/ \
+    && chmod +x /usr/local/bin/geckodriver
 
 # Find the exact installed path for WebDrivers and add them to the system PATH environment
 ENV PATH="/usr/bin:/usr/local/bin:${PATH}"
@@ -32,6 +51,11 @@ COPY . .
 
 # Expose your Uvicorn web server port
 EXPOSE 8000
+
+# noVNC port for the live-login flow — on a VM (Oracle, etc.) this gets
+# opened directly in the firewall/security list rather than proxied
+# through the app, since there's no Render-style single-port constraint.
+EXPOSE 6080
 
 # Launch Uvicorn using the explicit src.main:app dot-notation path
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
