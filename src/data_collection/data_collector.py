@@ -14,13 +14,15 @@ from data_processing.cache_manager import initialize_memory_cache
 songs = {}
 players = {}
 results = {}
+config = {}
 
-def run_pipeline_migration(league_id: str, browser_type: str, cached_db_data: dict) -> dict:
-    global songs, players, results
+def run_pipeline_migration(league_id: str, browser_type: str, session_cookie: str, cached_db_data: dict) -> dict:
+    global songs, players, results, config
     
     config = {
         "league_id": league_id,
         "browser_type": browser_type,
+        "session_cookie": session_cookie,
         "username-player_name": cached_db_data.get("username_mapping", {})
     }
     
@@ -30,7 +32,7 @@ def run_pipeline_migration(league_id: str, browser_type: str, cached_db_data: di
     songs = cached_db_data.get("songs", {})
     players = cached_db_data.get("players", {})
 
-    if results and players:
+    if results and players and songs:
         print(f"Pulled previous results from database for league: {league_id}")
         initialize_memory_cache({
             "rounds": results,
@@ -45,8 +47,44 @@ def run_pipeline_migration(league_id: str, browser_type: str, cached_db_data: di
         
         results = scraped_rounds
 
-        initialize_memory_cache({"rounds": results})
-        new_round_check(config)
+    return results
+
+def process_results(username_mapping: dict) -> dict:
+    global songs, players, results, config
+    if not config.get("username-player_name"):
+        config["username-player_name"] = username_mapping
+    if not players:
+        players = export_players(results, get_avatar_cache())
+        for player in players:
+            username = player.get("name", "")
+            if username == "[Left the league]":
+                players.remove(player)
+            name = convert_username_to_name(username, username_mapping)
+            player["name"] = name
+    if not songs:
+        converted_songs = []
+        songs = export_songs(results)
+        song_number = 1
+        for song in songs:
+            submitter = song.get("player_name", "")
+            submitter_name = convert_username_to_name(submitter, username_mapping)
+            song["id"] = f"{submitter_name[:3].lower()}{song.get("artist")[:3].lower()}{song.get("name")[:3].lower()}{song_number:05d}"
+            song_number += 1
+            for voter in song.get("voters", []):
+                name = voter.get("name", "")
+                voter_name = convert_username_to_name(name, username_mapping)
+                voter["name"] = voter_name
+            converted_songs.append({
+                "id": song.get("id"),
+                "name": song.get("name", "Unknown Title"),
+                "artist": song.get("artist", "Unknown Artist"),
+                "album": song.get("album", "Unknown Album"),
+                "player_name": submitter_name,
+                "votes": song.get("votes", 0),
+                "voters": song.get("voters", [])
+            })
+    else:
+        converted_songs = songs
 
     sanitized_rounds = []
     
@@ -88,12 +126,12 @@ def run_pipeline_migration(league_id: str, browser_type: str, cached_db_data: di
     results = sorted(sanitized_rounds, key= lambda x: x.get("round_number"))
 
     players = sorted(players, key=lambda x: x.get("name", "").lower())
-    songs = sorted(songs, key=lambda x: x.get("artist", "").lower())
+    converted_songs = sorted(converted_songs, key=lambda x: x.get("artist", "").lower())
 
     current_working_data = {
         "players": players,
         "rounds": results,
-        "songs": songs
+        "songs": converted_songs
     }
     initialize_memory_cache(current_working_data)
 
@@ -105,7 +143,7 @@ def run_pipeline_migration(league_id: str, browser_type: str, cached_db_data: di
 
     return {
         "rounds": results,
-        "songs": songs,
+        "songs": converted_songs,
         "players": processed_players,
         "precomputed_stats": precomputed_dashboard_stats,
         "avatars": updated_avatars,

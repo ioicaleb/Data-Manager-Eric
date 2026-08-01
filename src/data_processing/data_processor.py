@@ -151,7 +151,7 @@ def prepare_master_matrix():
     """
     data = []
     players_data = get_players() or []
-
+    players_data = sorted(players_data, key=lambda x: x.get("name", "").lower()) if isinstance(players_data, list) else sorted(players_data.items(), key=lambda x: x[0].lower())
     for player in players_data:
         player_name = player.get("name", "Unknown")
         if not player_name or player_name == "[Left the league]":

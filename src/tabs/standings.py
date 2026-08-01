@@ -69,6 +69,7 @@ def generate_standings_tab(page: ft.Page):
                 ft.Column(
                     controls=[tab_view],
                     col={"sm":12, "md": 8, "lg": 6, "xl": 5},
+                    height=content_height,
                     expand=False,
                 )
             ],

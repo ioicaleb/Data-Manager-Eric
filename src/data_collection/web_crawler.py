@@ -7,6 +7,9 @@ including round information, song submissions, and voting details.
 
 import time
 import re
+import os
+import glob
+import sys
 from bs4 import BeautifulSoup, NavigableString
 from data_collection.objects import Round, Voter, Song, convert_username_to_name
 from selenium import webdriver
@@ -75,7 +78,7 @@ def get_round_results(driver, config):
             user_comment = div.select_one("div:nth-child(2) > p > span").get_text().strip()
             player_name = convert_username_to_name(
                 username=username_div.get_text().strip(),
-                players=players
+                username_map = config.get("username-player_name")
             )
         
             get_avatar_url(div, player_name)
@@ -89,7 +92,7 @@ def get_round_results(driver, config):
             for voter_info in voters_card:
                 voter_name = convert_username_to_name(
                     username=voter_info.select_one(":nth-child(2) > b").get_text(),
-                    players=players
+                    username_map = config.get("username-player_name")
                 )
                 
                 vote_block = voter_info.select_one(":nth-child(3) > h6")
@@ -249,14 +252,35 @@ def apply_stored_session(driver, session_cookie_value: str, cookie_name: str = "
     value; this makes that cookie's session the browser's session.
     """
     driver.get(f"https://{domain}/")
-    driver.add_cookie({
-        "name": cookie_name,
-        "value": session_cookie_value,
-        "domain": domain,
-        "path": "/",
-        "secure": True,
-    })
+    print(f"[auth] Landed on {driver.current_url} before setting cookie")
+
+    try:
+        driver.delete_cookie(cookie_name)
+    except Exception:
+        pass
+
+    try:
+        driver.add_cookie({
+            "name": cookie_name,
+            "value": session_cookie_value,
+            "domain": domain,
+            "path": "/",
+            "secure": True,
+        })
+        print("[auth] add_cookie() completed without raising")
+    except Exception as e:
+        print(f"[auth] add_cookie() raised: {e}")
+
+    current_cookies = driver.get_cookies()
+    print(f"[auth] Cookies present after set: {[c.get('name') for c in current_cookies]}")
+    match = next((c for c in current_cookies if c.get("name") == cookie_name), None)
+    if match:
+        print(f"[auth] Injected cookie value matches expected: {match.get('value') == session_cookie_value}")
+    else:
+        print("[auth] WARNING: injected cookie is not present in the cookie jar at all")
+
     driver.get(f"https://{domain}/l/")
+    print(f"[auth] After reload, landed on {driver.current_url}, title: {driver.title}")
 
 def apply_stored_session_localstorage(driver, storage_key: str, storage_value: str, domain: str = "app.musicleague.com"):
     """
@@ -282,20 +306,14 @@ def setup_authenticated_driver(config: dict):
     browser_type = config.get("browser_type", "chromium")
     if browser_type == "firefox":
         try:
-            profile_path = get_firefox_profile_path()
-            safe_profile = FirefoxProfile(profile_path)
             options = FirefoxOptions()
             options.add_argument("-headless")
-            options.profile = safe_profile
         except Exception:
             options = FirefoxOptions()
             
         driver = webdriver.Firefox(options=options)
     else:
-        user_data_path = get_chrome_user_data_dir()
         options = ChromeOptions()
-        
-        options.add_argument(f"--user-data-dir={user_data_path}-selenium-test")
         options.add_argument("--headless")
         options.add_argument("--profile-directory=Default")
         options.add_argument("--no-sandbox")
@@ -333,8 +351,14 @@ def get_results(config, results = None):
         target_url = f"https://app.musicleague.com/l/{config.get('league_id')}/"
         driver.get(target_url)
         time.sleep(1)
+
+        page_source_lower = driver.page_source.lower()
+        looks_logged_out = ("log in" in page_source_lower or "sign in" in page_source_lower) and "log out" not in page_source_lower
+        print(f"[auth] League page landed on {driver.current_url}")
+        print(f"[auth] Page appears {'LOGGED OUT' if looks_logged_out else 'authenticated (no login prompt detected)'}")
+
         if results:
-            return check_for_new_rounds(driver, config, results=results)
+            return check_for_new_rounds(config=config, results=results, driver=driver)
         else:
             return get_all_rounds(driver, config)     
     except Exception as e:

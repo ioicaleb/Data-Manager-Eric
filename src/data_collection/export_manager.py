@@ -81,7 +81,6 @@ def export_songs(rounds: list) -> list:
     all_songs = []
     
     for round_obj in rounds:
-        song_number = 1
         if hasattr(round_obj, "__dict__"):
             round_obj = round_obj.__dict__
         
@@ -94,10 +93,7 @@ def export_songs(rounds: list) -> list:
             voters_list = song.get("voters", [])
             if voters_list and not isinstance(voters_list[0], dict):    
                 song["voters"] = [vars(voter) if hasattr(voter, "__dict__") else voter for voter in voters_list]
-            
-            song["id"] = f"{song['player_name'][:3].lower()}{song_number:02d}{round_obj['round_number']:02d}"
             all_songs.append(song)
-            song_number += 1
             
     _cached_songs_array = sorted(all_songs, key=lambda x: (x["player_name"], -x["votes"]))
     return _cached_songs_array

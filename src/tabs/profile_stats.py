@@ -31,12 +31,12 @@ async def generate_profile_tab(page: ft.Page, return_callback, progress_callback
     players_iterable = []
     if isinstance(players_data, dict):
         for k, v in players_data.items():
-            if isinstance(v, dict) and k != "[Left the league]":
-                if "name" not in v:
-                    v["name"] = k
-                players_iterable.append(v)
+            if "name" not in v:
+                v["name"] = k
+            players_iterable.append(v)
     elif isinstance(players_data, list):
-        players_iterable = [p for p in players_data if isinstance(p, dict) and p.get("name") != "[Left the league]"]
+        players_iterable = [p for p in players_data if isinstance(p, dict)]
+    players_iterable = dict(sorted({p.get("name", f"Player {i}"): p for i, p in enumerate(players_iterable)}.items())).values()
 
     def _load_player_data(p_obj):
         name = p_obj.get("name") or p_obj.get("player") or "Unknown Player"
@@ -81,7 +81,7 @@ async def generate_profile_tab(page: ft.Page, return_callback, progress_callback
         return lambda e: show_player_profile(target_name)
 
     def build_player_profile_view(player: dict, player_stats_data: dict, avatar_b64: str):
-        if player["name"] is None:
+        if not player.get("name"):
             return
         name = player.get("name", "Unknown")
 
@@ -251,7 +251,6 @@ async def generate_profile_tab(page: ft.Page, return_callback, progress_callback
     for p_obj in players_iterable:
         p_name = p_obj.get("name") or p_obj.get("player") or "Unknown Player"
         p_votes = p_obj.get("votes_to", 0)
-        p_rank = p_obj.get("position", "#?")
 
         avatar_b64 = avatar_cache.get(p_name, "")
         if avatar_b64:
@@ -269,7 +268,7 @@ async def generate_profile_tab(page: ft.Page, return_callback, progress_callback
         profiles_list.controls.append(
             ft.ListTile(
                 leading=ft.Container(content=leading_control, width=50, height=50, alignment=ft.Alignment.CENTER),
-                title=ft.Text(f"{p_rank}. {p_name}", size=20, weight=ft.FontWeight.BOLD),
+                title=ft.Text(p_name, size=20, weight=ft.FontWeight.BOLD),
                 subtitle=ft.Text(f"Total Votes Received: {p_votes}"),
                 trailing=ft.Icon(ft.Icons.CHEVRON_RIGHT),
                 on_click=create_click_handler(p_name)
