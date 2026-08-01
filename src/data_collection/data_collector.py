@@ -68,7 +68,7 @@ def process_results(username_mapping: dict) -> dict:
         for song in songs:
             submitter = song.get("player_name", "")
             submitter_name = convert_username_to_name(submitter, username_mapping)
-            song["id"] = f"{submitter_name[:3].lower()}{song.get("artist")[:3].lower()}{song.get("name")[:3].lower()}{song_number:05d}"
+            song["id"] = f"{submitter_name[:3].lower()}{song.get('artist')[:3].lower()}{song.get('name')[:3].lower()}{song_number:05d}"
             song_number += 1
             for voter in song.get("voters", []):
                 name = voter.get("name", "")
