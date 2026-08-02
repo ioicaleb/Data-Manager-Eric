@@ -14,8 +14,9 @@ def initialize_memory_cache(database_payload: dict):
     Seeds your memory layers with structural records retrieved from PostgreSQL.
     """
     global _global_db_cache
-    _global_db_cache = database_payload if database_payload else {}
-    print(f"Memory Cache Proxy successfully initialized.")
+    if _global_db_cache.get("l_id") != database_payload.get("l_id"):
+        _global_db_cache = database_payload if database_payload else {}
+        print(f"Memory Cache Proxy successfully initialized.")
 
 def get_master_memory_payload() -> dict:
     """
