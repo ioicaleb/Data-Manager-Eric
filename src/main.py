@@ -208,13 +208,13 @@ async def main_dashboard(page: ft.Page, start_tab_index=0, progress_callback=Non
                 ft.Container(
                     margin=ft.Margin(0, 10, 0, 20), 
                     content=ft.Stack(
-                        height=70,
+                        height=70 if not dashboard_is_mobile else 35,
                         controls=[
                             ft.Row(
                                 controls=[
                                     ft.Text(
                                         "🎵 Eric the Data Manager" if not dashboard_is_mobile else "🎵 Eric",
-                                        size=24 if dashboard_is_mobile else 50,
+                                        size=22 if dashboard_is_mobile else 50,
                                         weight=ft.FontWeight.BOLD,
                                         text_align=ft.TextAlign.CENTER
                                     )
@@ -237,12 +237,13 @@ async def main_dashboard(page: ft.Page, start_tab_index=0, progress_callback=Non
 
 def show_loading_page(page: ft.Page):
     """Renders a visual pipeline loading bar layout on the screen."""
+    is_mobile = (page.width or 1200) < 700
     page.controls.clear()
     
-    loading_text = ft.Text("Eric is Processing Your League", size=36, weight=ft.FontWeight.BOLD)
+    loading_text = ft.Text("Eric is Processing Your League", size=36 if not is_mobile else 28, weight=ft.FontWeight.BOLD)
     
     progress_bar = ft.ProgressBar(width=min(400, (page.width or 400) - 40), color="purple", value=0.0)
-    status_text = ft.Text("Initializing secure runtime containers...", size=24, color="grey400")
+    status_text = ft.Text("Initializing secure runtime containers...", size=16 if is_mobile else 24, color="grey400")
     loading_spinner = ft.ProgressRing(width=20, stroke_width=2, color="purple")
     
     loading_layout = ft.Column(
@@ -255,7 +256,7 @@ def show_loading_page(page: ft.Page):
                 spacing=15, 
                 alignment=ft.MainAxisAlignment.CENTER
             ),
-            ft.Text("Please do not close this browser window.", size=18, color="grey600"),
+            ft.Text("Please do not close this browser window.", size=16 if is_mobile else 20, color="grey600"),
         ],
         alignment=ft.MainAxisAlignment.CENTER,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,

@@ -76,10 +76,10 @@ def generate_songs_tab(page: ft.Page):
                         ft.ResponsiveRow(
                             spacing=15,
                             controls=[
-                                ft.Column([ft.Row([ft.Icon(ft.Icons.MIC, size=20, color="purple200"), ft.Text(f"Artist: {artist}", size=15)])], col={"lg": 3, "md": 6, "sm": 12}),
-                                ft.Column([ft.Row([ft.Icon(ft.Icons.ALBUM, size=20, color="purple200"), ft.Text(f"Album: {album}", size=15)])], col={"lg": 3, "md": 6, "sm": 12}),
-                                ft.Column([ft.Row([ft.Icon(ft.Icons.PERSON, size=20, color="amber200"), ft.Text(f"Submitted By: {player}", size=15)])], col={"lg": 3, "md": 6, "sm": 12}),
-                                ft.Column([ft.Row([ft.Icon(ft.Icons.PLAYLIST_PLAY, size=20, color="greenAccent200"), ft.Text(f"Round {round_number}: {round_title}", size=15)])], col={"lg": 3, "md": 6, "sm": 12}),
+                                ft.Column([ft.Row([ft.Icon(ft.Icons.MIC, size=20, color="purple200"), ft.Text(f"Artist: {artist}", size=15)])], col={"xs": 12, "sm": 12, "md": 6, "lg": 3}),
+                                ft.Column([ft.Row([ft.Icon(ft.Icons.ALBUM, size=20, color="purple200"), ft.Text(f"Album: {album}", size=15)])], col={"xs": 12, "sm": 12, "md": 6, "lg": 3}),
+                                ft.Column([ft.Row([ft.Icon(ft.Icons.PERSON, size=20, color="amber200"), ft.Text(f"Submitted By: {player}", size=15)])], col={"xs": 12, "sm": 12, "md": 6, "lg": 3}),
+                                ft.Column([ft.Row([ft.Icon(ft.Icons.PLAYLIST_PLAY, size=20, color="greenAccent200"), ft.Text(f"Round {round_number}: {round_title}", size=15)])], col={"xs": 12, "sm": 12, "md": 6, "lg": 3}),
                             ]
                         ),
                         

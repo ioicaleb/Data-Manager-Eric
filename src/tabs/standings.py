@@ -8,7 +8,7 @@ def generate_standings_tab(page: ft.Page):
     """
     is_mobile = (page.width or 1200) < 600
     line_size = 20 if is_mobile else 32
-    content_height = max(400, (page.height or 900) - 260)
+    content_height = max(400, (page.height or 900) - 260) if not is_mobile else max(400, (page.height or 900) - 220)
 
     votes_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.AUTO, height=content_height)
     wins_column = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START, scroll=ft.ScrollMode.AUTO, height=content_height)
@@ -68,8 +68,7 @@ def generate_standings_tab(page: ft.Page):
             controls=[
                 ft.Column(
                     controls=[tab_view],
-                    col={"sm":12, "md": 8, "lg": 6, "xl": 5},
-                    height=content_height,
+                    col={"xs": 12, "sm": 12, "md": 8, "lg": 6, "xl": 5},
                     expand=False,
                 )
             ],
