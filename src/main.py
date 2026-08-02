@@ -20,7 +20,6 @@ from tabs.song_check import generate_songs_tab
 
 from data_processing.cache_manager import initialize_memory_cache
 from data_processing.search_processor import clear_search_processor_globals, init_search_cache
-from data_processing.cache_builder import build_static_dashboard_cache
 from data_collection.data_collector import run_pipeline_migration, process_results
 from data_collection.web_crawler import get_avatar_cache
 
@@ -569,7 +568,6 @@ async def loading_gateway(page: ft.Page):
             status_text.value = "Building dashboard & preparing search..."
             page.update() 
             
-            await asyncio.to_thread(build_static_dashboard_cache, db_cache_payload)
             await asyncio.to_thread(init_search_cache)
 
             progress_bar.value = 0.75
