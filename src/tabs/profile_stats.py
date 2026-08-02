@@ -109,7 +109,7 @@ async def generate_profile_tab(page: ft.Page, return_callback, progress_callback
         round_songs = generate_round_songs(player_stats_data)
         votes_from = generate_votes_from(player_stats_data, name)
         votes_to = generate_votes_to(player_stats_data)
-        player_stats = generate_player_stats(player_stats_data)
+        player_stats = generate_player_stats(player_stats_data, is_mobile=is_mobile)
         votes_songs = generate_votes_songs(player_stats_data, name)
 
         views_map = {

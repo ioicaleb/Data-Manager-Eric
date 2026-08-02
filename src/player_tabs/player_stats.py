@@ -1,7 +1,7 @@
 import flet as ft
 from data_processing.search_processor import find_song_by_id
 
-def generate_player_stats(player_stats_data):
+def generate_player_stats(player_stats_data, is_mobile=False):
     """
     Renders an in-memory deep-dive analytics landing board detailing a user's 
     accumulated records, round records, top artists, and engagement data.
@@ -21,7 +21,7 @@ def generate_player_stats(player_stats_data):
             voter_text_str = f"{voter_name}:  {voter_votes} pts" if show_votes_cond else f"{voter_name}"
             
             voter_info = ft.Column(
-                controls=[ft.Text(voter_text_str, size=14, color=ft.Colors.GREY_400)],
+                controls=[ft.Text(voter_text_str, size=14 if not is_mobile else 12, color=ft.Colors.GREY_400, no_wrap=False)],
                 spacing=2
             )
             
@@ -30,7 +30,7 @@ def generate_player_stats(player_stats_data):
                     ft.Container(
                         content=ft.Text(
                             f"💬 \"{voter.get('comment')}\"",
-                            size=14,
+                            size=14 if not is_mobile else 12,
                             italic=True,
                             color=ft.Colors.GREY_500
                         ),
@@ -42,13 +42,13 @@ def generate_player_stats(player_stats_data):
         voter_container =  ft.Container(
             content=ft.Column(
                 controls=[
-                    ft.Text(f"🎵 {song_data.get('name', 'Unknown Track')}", size=24, weight=ft.FontWeight.W_600),
-                    ft.Text(f"Artist: {song_data.get('artist', 'Unknown')}   |   Album: {song_data.get('album', 'Unknown')}", size=18, color=ft.Colors.GREY_400),
-                    ft.Text(f"Comment: {song_data.get('user_comment', 'Unknown')}", size=18) if song_data.get('user_comment') else None, 
-                    ft.Text(f"Total Votes: {song_data.get('votes', 0)} pts", size=18, weight=ft.FontWeight.W_500),
+                    ft.Text(f"🎵 {song_data.get('name', 'Unknown Track')}", size=24 if not is_mobile else 16, weight=ft.FontWeight.W_600, no_wrap=False),
+                    ft.Text(f"Artist: {song_data.get('artist', 'Unknown')}   |   Album: {song_data.get('album', 'Unknown')}", size=18 if not is_mobile else 12, color=ft.Colors.GREY_400, no_wrap=False),
+                    ft.Text(f"Comment: {song_data.get('user_comment', 'Unknown')}", size=18 if not is_mobile else 12, no_wrap=False) if song_data.get('user_comment') else None, 
+                    ft.Text(f"Total Votes: {song_data.get('votes', 0)} pts", size=18 if not is_mobile else 12, weight=ft.FontWeight.W_500, no_wrap=False),
                     ft.Container(
                         content=voter_list_column,
-                        margin=ft.Margin(20, 5, 0, 10)
+                        margin=ft.Margin(20, 5, 0, 10)if not is_mobile else ft.Margin(10, 5, 0, 10)
                     )
                 ],
                 spacing=4
@@ -62,32 +62,32 @@ def generate_player_stats(player_stats_data):
 
     favorite_player_container = ft.Container(
         content=ft.Row([
-            ft.Icon(ft.Icons.FAVORITE, color=ft.Colors.RED_400, size=24),
-            ft.Text(f"Favorite Player: {player_stats_data.get('favorite_player', 'None Checked')}", size=20, weight=ft.FontWeight.BOLD)
+            ft.Icon(ft.Icons.FAVORITE, color=ft.Colors.RED_400, size=24 if not is_mobile else 18),
+            ft.Text(f"Favorite Player: {player_stats_data.get('favorite_player', 'None Checked')}", size=20 if not is_mobile else 14, weight=ft.FontWeight.BOLD, no_wrap=False)
         ]),
         margin=ft.Margin(bottom=15)
     )
 
     top_player_container = ft.Container(
         content=ft.Row([
-            ft.Icon(ft.Icons.THUMB_UP, color=ft.Colors.BLUE_400, size=24),
-            ft.Text(f"Most Favorited Player: {player_stats_data.get('top_player', 'None Checked')}", size=20, weight=ft.FontWeight.BOLD)
+            ft.Icon(ft.Icons.THUMB_UP, color=ft.Colors.BLUE_400, size=24 if not is_mobile else 18),
+            ft.Text(f"Most Favorited Player: {player_stats_data.get('top_player', 'None Checked')}", size=20 if not is_mobile else 14, weight=ft.FontWeight.BOLD, no_wrap=False)
         ]),
         margin=ft.Margin(bottom=15)
     )
 
     points_per_vote_container = ft.Container(
         content=ft.Row([
-            ft.Icon(ft.Icons.HOW_TO_VOTE, color=ft.Colors.GREEN_400, size=24),
-            ft.Text(f"Points per Vote: {player_stats_data.get('points_per_vote', '0.0')}", size=20, weight=ft.FontWeight.BOLD)
+            ft.Icon(ft.Icons.HOW_TO_VOTE, color=ft.Colors.GREEN_400, size=24 if not is_mobile else 18),
+            ft.Text(f"Points per Vote: {player_stats_data.get('points_per_vote', '0.0')}", size=20 if not is_mobile else 14, weight=ft.FontWeight.BOLD, no_wrap=False)
         ]),
         margin=ft.Margin(bottom=15)
     )
 
     number_of_comments_container = ft.Container(
         content=ft.Row([
-            ft.Icon(ft.Icons.MESSAGE, color=ft.Colors.PURPLE_400, size=24),
-            ft.Text(f"Number of Comments Left: {player_stats_data.get('comments', 0)} Comments", size=20, weight=ft.FontWeight.BOLD)
+            ft.Icon(ft.Icons.MESSAGE, color=ft.Colors.PURPLE_400, size=24 if not is_mobile else 18),
+            ft.Text(f"Number of Comments Left: {player_stats_data.get('comments', 0)} Comments", size=20 if not is_mobile else 14, weight=ft.FontWeight.BOLD, no_wrap=False, max_lines=2, overflow=ft.TextOverflow.VISIBLE)
         ]),
         margin=ft.Margin(bottom=15)
     )
@@ -99,14 +99,14 @@ def generate_player_stats(player_stats_data):
         best_song_view = ft.Column(
             controls=[
                 ft.Row([
-                    ft.Text(f"🏆 Best Song: {best_song.get('name', 'Unknown')}", size=24, weight=ft.FontWeight.BOLD, color="amber200"),
+                    ft.Text(f"🏆 Best Song: {best_song.get('name', 'Unknown')}", size=24 if not is_mobile else 18, weight=ft.FontWeight.BOLD, color="amber200", no_wrap=False),
                 ]),
                 ft.Container(
                     content=ft.Column( controls = [
-                        ft.Text(f"Artist: {best_song.get('artist', 'Unknown')}", size=18),
-                        ft.Text(f"Album: {best_song.get('album', 'Unknown')}", size=18),
-                        ft.Text(f"Comment: {best_song.get('user_comment', '')}", size=18) if best_song.get('user_comment') else None,
-                        ft.Text(f"Votes: {best_song.get('votes', 0)} pts", size=18, weight=ft.FontWeight.BOLD, color="greenAccent200"),
+                        ft.Text(f"Artist: {best_song.get('artist', 'Unknown')}", size=18 if not is_mobile else 14, no_wrap=False),
+                        ft.Text(f"Album: {best_song.get('album', 'Unknown')}", size=18 if not is_mobile else 14, no_wrap=False),
+                        ft.Text(f"Comment: {best_song.get('user_comment', '')}", size=18 if not is_mobile else 14, no_wrap=False) if best_song.get('user_comment') else None,
+                        ft.Text(f"Votes: {best_song.get('votes', 0)} pts", size=18 if not is_mobile else 14, weight=ft.FontWeight.BOLD, color="greenAccent200", no_wrap=False),
                     ], spacing=2),
                     margin=ft.Margin(30, 0, 0, 0)
                 )
@@ -114,7 +114,7 @@ def generate_player_stats(player_stats_data):
             spacing=5
         )
     else:
-        best_song_view = ft.Text("No songs found.", italic=True, size=18, color="grey")
+        best_song_view = ft.Text("No songs found.", italic=True, size=18 if not is_mobile else 14, color="grey", no_wrap=False)
 
     best_song_view.controls[1].content.controls = [c for c in best_song_view.controls[1].content.controls if c is not None]
     best_song_container = ft.Container(content=best_song_view, margin=ft.Margin(bottom=15))
@@ -134,9 +134,9 @@ def generate_player_stats(player_stats_data):
             controls=[
                 ft.Row([
                     ft.Icon(ft.Icons.ALBUM),
-                    ft.Text(f"Best Round Performance: Round {round_number} — {best_round.get('title', 'Unknown Title')}", size=20, weight=ft.FontWeight.BOLD),
+                    ft.Text(f"Best Round Performance: Round {round_number} — {best_round.get('title', 'Unknown Title')}", size=20 if not is_mobile else 16, weight=ft.FontWeight.BOLD, no_wrap=False),
                 ]),
-                ft.Text(f"Score: {round_score} Points", size=16, weight=ft.FontWeight.W_600, color=ft.Colors.BLUE_400),
+                ft.Text(f"Score: {round_score} Points", size=16 if not is_mobile else 12, weight=ft.FontWeight.W_600, color=ft.Colors.BLUE_400, no_wrap=False),
                 ft.Container(content=best_round_songs_column, margin=ft.Margin(20, 5, 0, 0))
             ],
             spacing=5
@@ -158,9 +158,9 @@ def generate_player_stats(player_stats_data):
             controls=[
                 ft.Row([
                     ft.Icon(ft.Icons.QUEUE_MUSIC, color=ft.Colors.ORANGE_400),
-                    ft.Text(f"Favorite Artist: {favorite_artist_name}", size=20, weight=ft.FontWeight.BOLD),
+                    ft.Text(f"Favorite Artist: {favorite_artist_name}", size=20 if not is_mobile else 16, weight=ft.FontWeight.BOLD, no_wrap=False),
                 ]),
-                ft.Text(f"Appearances: {favorite_artist_data.get('appearances', 0)} times", size=16, weight=ft.FontWeight.W_600),
+                ft.Text(f"Appearances: {favorite_artist_data.get('appearances', 0)} times", size=16 if not is_mobile else 12, weight=ft.FontWeight.W_600, no_wrap=False),
                 ft.Container(content=fav_artist_songs_column, margin=ft.Margin(20, 5, 0, 0))
             ],
             spacing=5
@@ -182,9 +182,9 @@ def generate_player_stats(player_stats_data):
             controls=[
                 ft.Row([
                     ft.Icon(ft.Icons.STAR_FILL if hasattr(ft.Icons, "STAR_FILL") else ft.Icons.STAR, color=ft.Colors.YELLOW_400),
-                    ft.Text(f"Top Artist: {top_artist_name}", size=20, weight=ft.FontWeight.BOLD),
+                    ft.Text(f"Top Artist: {top_artist_name}", size=20 if not is_mobile else 16, weight=ft.FontWeight.BOLD, no_wrap=False),
                 ]),
-                ft.Text(f"Total Points: {top_artist_data.get('votes', 0)} pts", size=16, weight=ft.FontWeight.W_600),
+                ft.Text(f"Total Points: {top_artist_data.get('votes', 0)} pts", size=16 if not is_mobile else 12, weight=ft.FontWeight.W_600, no_wrap=False),
                 ft.Container(content=top_artist_songs_column, margin=ft.Margin(left=20, top=5))
             ],
             spacing=5
@@ -213,6 +213,7 @@ def generate_player_stats(player_stats_data):
         content=player_stats_list,
         expand=True,
         height = 600,
+        width = 360 if is_mobile else 600,
         visible=False
     )
 
