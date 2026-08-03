@@ -164,4 +164,3 @@ cython_debug/
 
 TODO.txt
 docker-compose.yml
-Dockerfile
