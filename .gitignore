@@ -163,3 +163,5 @@ cython_debug/
 .flet/
 
 TODO.txt
+docker-compose.yml
+Dockerfile
