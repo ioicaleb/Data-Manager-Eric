@@ -41,7 +41,10 @@ async def generate_profile_tab(page: ft.Page, return_callback, progress_callback
     def _load_player_data(p_obj):
         name = p_obj.get("name") or p_obj.get("player") or "Unknown Player"
         stats = get_from_db(f"precomputed_stats_{name}") or {}
-        avatar_url = stats.get("avatar_url")
+        if stats:
+            avatar_url = stats.get("avatar_url")
+        else:
+            avatar_url = p_obj.get("avatar_url")
         avatar_b64 = fetch_avatar_base64_raw(avatar_url) if avatar_url else ""
         return name, stats, avatar_b64
 
@@ -125,8 +128,6 @@ async def generate_profile_tab(page: ft.Page, return_callback, progress_callback
         first_title = list(views_map.keys())[0]
         for t_key, container in views_map.items():
             container.visible = (t_key == first_title)
-
-        menu_dropdown_ref = {}
 
         def handle_menu_click(e):
             clicked_title = e.control.content.value if not is_mobile else e.control.value
@@ -280,7 +281,7 @@ async def generate_profile_tab(page: ft.Page, return_callback, progress_callback
             controls=[
                 ft.Column(
                     controls=[profiles_list],
-                    width=None if is_mobile else 500,
+                    width=None if is_mobile else 900,
                     expand=is_mobile,
                     scroll=ft.ScrollMode.ALWAYS
                 )

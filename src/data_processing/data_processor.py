@@ -184,7 +184,7 @@ def prepare_player_round_info(player):
         data.append(round_data)
     return data
 
-def process_player_stats(player: dict, top_songs_data: list, all_songs_data: list, round_songs_data: dict, votes_data: dict):
+def process_player_stats(player: dict, top_songs_data: list, all_songs_data: list, round_songs_data: dict, votes_data: dict, username_mapping: dict) -> dict:
     """
     Precomputes dynamic statistics variables, verifying list/dict indices inside container loops.
     """
@@ -267,7 +267,6 @@ def process_player_stats(player: dict, top_songs_data: list, all_songs_data: lis
                         data["top_artist"] = sorted(player_artists.items(), key=lambda x: x[1]["votes"], reverse=True)[0]
                         if times_voted > 0:
                             data["points_per_vote"] = round(float(total_votes_given / times_voted), 2)
-        username_mapping = get_from_db("username_mapping") or None
         if username_mapping:
             filename = username_mapping.get(player.get("name"), "")
             if filename:

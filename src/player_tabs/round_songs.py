@@ -36,7 +36,7 @@ def generate_round_songs(player_stats_data):
                         color="purple100"
                     ),
                 ],
-                spacing=10
+                spacing=10,
             )
             song_details = ft.Container(
                 content=ft.Column(controls=[], spacing=10)

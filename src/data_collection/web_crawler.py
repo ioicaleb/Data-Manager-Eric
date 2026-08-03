@@ -7,9 +7,6 @@ including round information, song submissions, and voting details.
 
 import time
 import re
-import os
-import glob
-import sys
 from bs4 import BeautifulSoup, NavigableString
 from data_collection.objects import Round, Voter, Song, convert_username_to_name
 from selenium import webdriver
@@ -252,50 +249,20 @@ def apply_stored_session(driver, session_cookie_value: str, cookie_name: str = "
     value; this makes that cookie's session the browser's session.
     """
     driver.get(f"https://{domain}/")
-    print(f"[auth] Landed on {driver.current_url} before setting cookie")
 
     try:
         driver.delete_cookie(cookie_name)
     except Exception:
         pass
 
-    try:
-        driver.add_cookie({
-            "name": cookie_name,
-            "value": session_cookie_value,
-            "domain": domain,
-            "path": "/",
-            "secure": True,
-        })
-        print("[auth] add_cookie() completed without raising")
-    except Exception as e:
-        print(f"[auth] add_cookie() raised: {e}")
+    driver.add_cookie({
+        "name": cookie_name,
+        "value": session_cookie_value,
+        "domain": domain,
+        "path": "/",
+        "secure": True,
+    })
 
-    current_cookies = driver.get_cookies()
-    print(f"[auth] Cookies present after set: {[c.get('name') for c in current_cookies]}")
-    match = next((c for c in current_cookies if c.get("name") == cookie_name), None)
-    if match:
-        print(f"[auth] Injected cookie value matches expected: {match.get('value') == session_cookie_value}")
-    else:
-        print("[auth] WARNING: injected cookie is not present in the cookie jar at all")
-
-    driver.get(f"https://{domain}/l/")
-    print(f"[auth] After reload, landed on {driver.current_url}, title: {driver.title}")
-
-def apply_stored_session_localstorage(driver, storage_key: str, storage_value: str, domain: str = "app.musicleague.com"):
-    """
-    Injects a captured session token into localStorage instead of a cookie.
-    Use this instead of apply_stored_session() if Music League's session is
-    actually stored client-side (localStorage/IndexedDB) rather than as an
-    HTTP cookie — confirm this in your browser's dev tools under
-    Application > Local Storage for app.musicleague.com before using this.
-    """
-    driver.get(f"https://{domain}/")
-    driver.execute_script(
-        "window.localStorage.setItem(arguments[0], arguments[1]);",
-        storage_key,
-        storage_value,
-    )
     driver.get(f"https://{domain}/l/")
 
 def setup_authenticated_driver(config: dict):
@@ -303,24 +270,13 @@ def setup_authenticated_driver(config: dict):
     Initializes a headless driver container and injects the dynamic cookie jar
     across all musicleague subdomains before data collection queries trigger.
     """
-    browser_type = config.get("browser_type", "chromium")
-    if browser_type == "firefox":
-        try:
-            options = FirefoxOptions()
-            options.add_argument("-headless")
-        except Exception:
-            options = FirefoxOptions()
-            
-        driver = webdriver.Firefox(options=options)
-    else:
-        options = ChromeOptions()
-        options.add_argument("--headless")
-        options.add_argument("--profile-directory=Default")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-gpu")
+    try:
+        options = FirefoxOptions()
+        options.add_argument("-headless")
+    except Exception:
+        options = FirefoxOptions()
         
-        driver = webdriver.Chrome(options=options)
+    driver = webdriver.Firefox(options=options)   
 
     if driver is None:
         print("Driver failed")
@@ -343,19 +299,12 @@ def get_results(config, results = None):
         if session_cookie:
             apply_stored_session(driver, session_cookie)
 
-        session_storage_key = config.get("session_storage_key")
-        session_storage_value = config.get("session_storage_value")
-        if session_storage_key and session_storage_value:
-            apply_stored_session_localstorage(driver, session_storage_key, session_storage_value)
-
         target_url = f"https://app.musicleague.com/l/{config.get('league_id')}/"
         driver.get(target_url)
         time.sleep(1)
 
         page_source_lower = driver.page_source.lower()
         looks_logged_out = ("log in" in page_source_lower or "sign in" in page_source_lower) and "log out" not in page_source_lower
-        print(f"[auth] League page landed on {driver.current_url}")
-        print(f"[auth] Page appears {'LOGGED OUT' if looks_logged_out else 'authenticated (no login prompt detected)'}")
 
         if results:
             return check_for_new_rounds(config=config, results=results, driver=driver)

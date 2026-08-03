@@ -8,7 +8,6 @@ and exporting database analytics states.
 from data_collection.web_crawler import get_results, load_avatar_cache, get_avatar_cache
 from data_collection.objects import convert_username_to_name
 from data_collection.export_manager import export_players, export_songs
-from data_processing.cache_builder import build_static_dashboard_cache
 from data_processing.cache_manager import initialize_memory_cache
 
 songs = {}
@@ -16,41 +15,11 @@ players = {}
 results = {}
 config = {}
 
-# Prevents two scrapes from ever running concurrently. Each scrape holds
-# a headless browser process open (300-500MB). A mobile client that
-# disconnects mid-scrape (switching networks, backgrounding the tab) does
-# NOT stop the background thread it started — asyncio.to_thread() keeps
-# running to completion regardless of whether the caller is still
-# connected. If the user then reloads or retries, a second scrape (and a
-# second 300-500MB browser process) would otherwise start on top of the
-# still-running first one — on a 512MB container, that's an instant OOM
-# kill. This flag makes a second attempt fail fast with a clear message
-# instead of silently doubling memory usage.
-_scrape_in_progress = False
-
-def run_pipeline_migration(league_id: str, browser_type: str, session_cookie: str, cached_db_data: dict) -> dict:
-    global songs, players, results, config, _scrape_in_progress
-
-    if _scrape_in_progress:
-        raise RuntimeError(
-            "A sync is already running (possibly from an earlier connection that dropped "
-            "but is still finishing in the background). Please wait a minute and try again "
-            "rather than retrying immediately — retrying now would start a second scrape "
-            "on top of the first and risks crashing the service from memory pressure."
-        )
-
-    _scrape_in_progress = True
-    try:
-        return _run_pipeline_migration_inner(league_id, browser_type, session_cookie, cached_db_data)
-    finally:
-        _scrape_in_progress = False
-
-def _run_pipeline_migration_inner(league_id: str, browser_type: str, session_cookie: str, cached_db_data: dict) -> dict:
+def run_pipeline_migration(league_id: str, session_cookie: str, cached_db_data: dict) -> dict:
     global songs, players, results, config
     
     config = {
         "league_id": league_id,
-        "browser_type": browser_type,
         "session_cookie": session_cookie,
         "username-player_name": cached_db_data.get("username_mapping", {})
     }
@@ -83,12 +52,14 @@ def process_results(username_mapping: dict) -> dict:
     if not config.get("username-player_name"):
         config["username-player_name"] = username_mapping
     if not players:
-        players = export_players(results, get_avatar_cache())
-        players = [p for p in players if p.get("name", "") != "[Left the league]"]
-        for player in players:
+        converted_players = export_players(results, get_avatar_cache())
+        converted_players = [p for p in converted_players if p.get("name", "") != "[Left the league]"]
+        for player in converted_players:
             username = player.get("name", "")
             name = convert_username_to_name(username, username_mapping)
             player["name"] = name
+    else:
+        converted_players = players
     if not songs:
         converted_songs = []
         songs = export_songs(results)
@@ -157,23 +128,18 @@ def process_results(username_mapping: dict) -> dict:
     converted_songs = sorted(converted_songs, key=lambda x: x.get("artist", "").lower())
 
     current_working_data = {
-        "players": players,
+        "players": converted_players,
         "rounds": results,
         "songs": converted_songs
     }
     initialize_memory_cache(current_working_data)
-
-    cache_results = build_static_dashboard_cache(current_working_data)
-    processed_players = cache_results.get("players", [])
-    precomputed_dashboard_stats = cache_results.get("precomputed_stats", {})
     
     updated_avatars = get_avatar_cache()
 
     return {
         "rounds": results,
         "songs": converted_songs,
-        "players": processed_players,
-        "precomputed_stats": precomputed_dashboard_stats,
+        "players": converted_players,
         "avatars": updated_avatars,
         "username_mapping": config["username-player_name"]
     }

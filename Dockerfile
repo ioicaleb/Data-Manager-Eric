@@ -15,8 +15,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gnupg \
     unzip \
     git \
-    chromium \
-    chromium-driver \
     firefox-esr \
     && rm -rf /var/lib/apt/lists/*
 

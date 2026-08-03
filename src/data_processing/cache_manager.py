@@ -14,9 +14,8 @@ def initialize_memory_cache(database_payload: dict):
     Seeds your memory layers with structural records retrieved from PostgreSQL.
     """
     global _global_db_cache
-    if _global_db_cache.get("l_id") != database_payload.get("l_id"):
-        _global_db_cache = database_payload if database_payload else {}
-        print(f"Memory Cache Proxy successfully initialized.")
+    _global_db_cache = database_payload if database_payload else {}
+    print(f"Memory Cache Proxy successfully initialized.")
 
 def get_master_memory_payload() -> dict:
     """
@@ -28,12 +27,10 @@ def get_master_memory_payload() -> dict:
 
 def get_from_db(filename):
     global _global_db_cache
-            
-    if filename in _global_db_cache:
-        return _global_db_cache[filename]
-    return None
+    if filename not in _global_db_cache:
+        return None
+    return _global_db_cache[filename]
 
 def send_to_db(filename, data):
     global _global_db_cache
-    if "[Left the league]" not in filename:
-        _global_db_cache[filename] = data
+    _global_db_cache[filename] = data

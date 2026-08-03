@@ -213,7 +213,7 @@ def generate_player_stats(player_stats_data, is_mobile=False):
         content=player_stats_list,
         expand=True,
         height = 600,
-        width = 360 if is_mobile else 600,
+        width = 360 if is_mobile else 900,
         visible=False
     )
 

@@ -18,8 +18,9 @@ from tabs.standings import generate_standings_tab
 from tabs.rounds import generate_rounds_tab
 from tabs.song_check import generate_songs_tab
 
-from data_processing.cache_manager import initialize_memory_cache
+from data_processing.cache_manager import get_from_db, initialize_memory_cache
 from data_processing.search_processor import clear_search_processor_globals, init_search_cache
+from data_processing.cache_builder import build_static_dashboard_cache
 from data_collection.data_collector import run_pipeline_migration, process_results
 from data_collection.web_crawler import get_avatar_cache
 
@@ -34,7 +35,6 @@ create_table_query = """
 CREATE TABLE IF NOT EXISTS music_leagues (
     league_id VARCHAR(255) PRIMARY KEY,
     admin_password_hash VARCHAR(255),
-    browser_type VARCHAR(50),
     scraped_data JSONB
 );
 """
@@ -63,7 +63,7 @@ def get_league_data_from_postgres(league_id: str) -> dict:
         return {}
     return row["scraped_data"]
 
-def save_league_data_to_postgres(league_id: str, secret_pwd_hash: str, payload: dict, browser: str):
+def save_league_data_to_postgres(league_id: str, secret_pwd_hash: str, payload: dict):
     DATABASE_URL = os.getenv("DATABASE_URL")
     conn = psycopg2.connect(DATABASE_URL, sslmode="require")
     cur = conn.cursor()
@@ -71,13 +71,13 @@ def save_league_data_to_postgres(league_id: str, secret_pwd_hash: str, payload: 
     exists = cur.fetchone()
     if exists:
         cur.execute(
-            "UPDATE music_leagues SET scraped_data = %s, browser_type = %s WHERE league_id = %s;",
-            (json.dumps(payload), browser, league_id)
+            "UPDATE music_leagues SET scraped_data = %s WHERE league_id = %s;",
+            (json.dumps(payload), league_id)
         )
     else:
         cur.execute(
-            "INSERT INTO music_leagues (league_id, admin_password_hash, browser_type, scraped_data) VALUES (%s, %s, %s, %s);",
-            (league_id, secret_pwd_hash, browser, json.dumps(payload))
+            "INSERT INTO music_leagues (league_id, admin_password_hash, scraped_data) VALUES (%s, %s, %s);",
+            (league_id, secret_pwd_hash, json.dumps(payload))
         )
     conn.commit()
     cur.close()
@@ -441,22 +441,12 @@ async def loading_gateway(page: ft.Page):
         can_reveal_password=True,
         hint_text="Paste from your browser's dev tools (Application > Cookies)"
     )
-    browser_dropdown = ft.Dropdown(
-        label="Browser Used for Login",
-        value="chromium",
-        width=field_width,
-        options=[
-            ft.dropdown.Option("chromium", "Chromium (Google Chrome stable)"),
-            ft.dropdown.Option("firefox", "Mozilla Firefox (Geckodriver)")
-        ]
-    )
     error_text = ft.Text(value="", color="red", size=20, weight=ft.FontWeight.BOLD)
     main_menu_container = ft.Ref[ft.Column]()
 
     async def execute_portal_pipeline(is_admin_mode: bool):
         l_id = league_id_field.value.strip()
         pwd = admin_password_field.value.strip()
-        browser_type = browser_dropdown.value
         session_cookie_value = session_cookie_field.value.strip() if session_cookie_field.value else ""
         raw_id_input = league_id_field.value.strip()
         
@@ -524,12 +514,13 @@ async def loading_gateway(page: ft.Page):
                 page.update() 
                 
                 scraped_results = await asyncio.to_thread(
-                    run_pipeline_migration, l_id, browser_type, session_cookie_value, db_cache_payload or {}
+                    run_pipeline_migration, l_id, session_cookie_value, db_cache_payload or {}
                 )
                 
                 if not scraped_results:
                     raise ValueError("Specified League ID has no parsed history. An Admin must scrape league data first.")
                 global username_mapping
+                username_mapping = db_cache_payload.get("username_mapping", None)
                 scraped_usernames = get_avatar_cache().keys()
 
                 has_unmapped = any(user not in username_mapping for user in scraped_usernames)
@@ -554,8 +545,12 @@ async def loading_gateway(page: ft.Page):
                 page.update() 
 
                 updated_payload["username_mapping"] = username_mapping
+                processed_results= await asyncio.to_thread(build_static_dashboard_cache, updated_payload)
+                updated_payload["players"] = processed_results["players"]
+                for player, stats in processed_results["precomputed_stats"].items():
+                    updated_payload[f"precomputed_stats_{player}"] = stats             
                 await asyncio.to_thread(
-                    save_league_data_to_postgres, l_id, hashed_pwd, updated_payload, browser_type)
+                    save_league_data_to_postgres, l_id, hashed_pwd, updated_payload)
                 db_cache_payload = updated_payload
 
 
@@ -680,7 +675,6 @@ async def loading_gateway(page: ft.Page):
                                         ft.Text("Initialize new leagues or pull results of new rounds.", size=16, color="grey"),
                                         admin_password_field,
                                         session_cookie_field,
-                                        browser_dropdown,
                                         ft.ElevatedButton(
                                             "Sync Data",
                                             on_click=lambda e: page.run_task(execute_portal_pipeline, True),

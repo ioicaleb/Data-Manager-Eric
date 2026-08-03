@@ -13,7 +13,7 @@ from data_processing.search_processor import (
 )
 from data_processing.data_processor import process_player_stats
 
-def build_static_dashboard_cache(cached_db_data: dict) -> dict:
+def build_static_dashboard_cache(payload: dict) -> dict:
     """
     Accepts raw structures directly from PostgreSQL data states, 
     pre-computes statistical tabs inside memory maps, and returns 
@@ -21,8 +21,8 @@ def build_static_dashboard_cache(cached_db_data: dict) -> dict:
     """
     print("Starting containerized master stats pre-computation...")
     
-    players = cached_db_data.get("players", [])
-    username_mapping = cached_db_data.get("username_mapping", None)
+    players = payload.get("players", [])
+    username_mapping = payload.get("username_mapping", None)
         
     all_players_precomputed_stats = {}
     
@@ -45,7 +45,8 @@ def build_static_dashboard_cache(cached_db_data: dict) -> dict:
             top_songs_data, 
             all_songs_data,
             round_songs_data, 
-            votes_data
+            votes_data,
+            username_mapping
         )
         
         player["num_comments"] = player_stats_data.get("comments", 0)
