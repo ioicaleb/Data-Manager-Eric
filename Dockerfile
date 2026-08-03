@@ -7,7 +7,6 @@ ENV PYTHONUNBUFFERED=1
 
 # Set working directory to the absolute project root folder
 WORKDIR /app
-ENV PYTHONPATH="/app:/app/src:${PYTHONPATH}"
 
 # Install curl, gnupg, and core system dependencies for headless browsers
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -17,9 +16,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     firefox-esr \
     && rm -rf /var/lib/apt/lists/*
-
-# Find the exact installed path for WebDrivers and add them to the system PATH environment
-ENV PATH="/usr/bin:/usr/local/bin:${PATH}"
 
 # Copy and install dependencies
 COPY requirements.txt .
